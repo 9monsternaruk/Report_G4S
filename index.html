@@ -35,7 +35,7 @@
       line-height: 32px;
     }
 
-    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) - แก้ไขใหม่เพื่อป้องกันการตัดกลางแผ่น */
+    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) - แก้ไขใหม่เพื่อป้องกันแครชบน iPad/iOS */
     @media print {
       @page {
         size: A4 portrait;
@@ -56,15 +56,18 @@
         margin: 0 !important;
       }
 
+      /* ซ่อนส่วนที่ไม่จำเป็นตอนพิมพ์ */
       .no-print, nav, #header-bar, .toast, .modal, #loadingModal, #write-section, #read-section { 
         display: none !important; 
       }
       
+      /* สำคัญมาก: ห้ามใช้ Flex ตอนพิมพ์เด็ดขาดเพื่อแก้บัก Safari iOS */
       #export-section, #exportContainer { 
-        display: block !important; /* สำคัญมาก: ห้ามใช้ Flex ตอนพิมพ์ */
+        display: block !important; 
         width: 100% !important;
       }
 
+      /* บังคับไม่ให้การ์ดถูกตัดกลางกระดาษ */
       .log-card { 
         display: block !important;
         page-break-inside: avoid !important;
@@ -88,6 +91,14 @@
         text-align: center;
         margin-bottom: 20px;
         font-weight: bold;
+      }
+      
+      .print-footer {
+        display: flex !important;
+        justify-content: space-between !important;
+        margin-top: 30px !important;
+        padding: 0 40px !important;
+        page-break-inside: avoid !important;
       }
     }
 
@@ -198,13 +209,13 @@
         <h2 class="text-xl font-bold text-black">รายงานผลการปฏิบัติงานประจำเดือน <span id="printMonthText"></span></h2>
       </div>
 
-      <!-- แก้ไข: ลบ print:gap-0 และใช้ print:block แทนเพื่อไม่ให้ Flexbox ทำงานตอนพิมพ์ -->
-      <div id="exportContainer" class="flex flex-col gap-2 print:block">
+      <!-- คอนเทนเนอร์รายการตอนพิมพ์ (ถอด Flexbox สำหรับตอนพิมพ์ออก เพื่อป้องกันบั๊กการตัดหน้าใน Safari) -->
+      <div id="exportContainer" class="flex flex-col gap-2">
         <!-- Logs for export will be injected here -->
       </div>
       
       <!-- ส่วนท้ายลายเซ็น (แสดงเฉพาะตอน Print) -->
-      <div class="hidden print:flex justify-between mt-12 pt-8 px-12">
+      <div class="hidden print-footer mt-12 pt-8 px-12">
         <div class="text-center">
           <p class="mb-8">ลงชื่อ................................................ผู้รายงาน</p>
           <p>(................................................)</p>
@@ -238,7 +249,7 @@
     </div>
   </nav>
 
-  <!-- Toast Notification -->
+  <!-- Toast Notification (แก้ไขบั๊กการแสดงผลแล้ว) -->
   <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 text-white px-4 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 w-max max-w-[90%]">
     <!-- เนื้อหาจะถูกแทรกด้วย JavaScript -->
   </div>
@@ -350,21 +361,26 @@
       document.getElementById('exportMonth').value = monthKey;
     }
 
+    // ฟังก์ชัน Toast ที่แก้บั๊กการ render รูปภาพไอคอน
     window.showToast = function(message, type = "success") {
       const toast = document.getElementById('toast');
       const isError = (type === 'error');
       const bgClass = isError ? 'bg-red-600' : 'bg-slate-800';
       const iconName = isError ? 'alert-triangle' : 'check-circle';
       
+      // สร้างเนื้อหาใหม่ทั้งหมดทุกครั้ง
       toast.innerHTML = `
         <i data-lucide="${iconName}" class="w-5 h-5 shrink-0"></i>
         <span id="toastMsg">${escapeHTML(message)}</span>
       `;
       
+      // กำหนดคลาสใหม่
       toast.className = `fixed top-5 left-1/2 -translate-x-1/2 ${bgClass} text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]`;
       
+      // ให้ Lucide วาดไอคอนใหม่
       lucide.createIcons();
 
+      // ซ่อนข้อความ
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('-translate-y-24', 'opacity-0');
@@ -519,7 +535,7 @@
       
       if (isExportMode) {
         return `
-          <div class="log-card pt-2 pb-4 border-b border-slate-200 print:border-slate-300">
+          <div class="log-card pt-2 pb-4 border-b border-slate-200">
             <div class="flex items-center text-sm font-medium text-slate-800 mb-1">
               <span class="mr-2">${thDate}</span>
               <span class="text-slate-500">เวลา ${log.time} น.</span>
@@ -848,6 +864,7 @@
       } catch (error) {
         console.error("Import Error Details:", error);
         hideLoadingModal();
+        // ข้อความจะถูกส่งไปแสดงที่ Toast และคราวนี้จะไม่พังแล้ว
         showToast(`ล้มเหลว: ${error.message}`, "error");
       }
     }
