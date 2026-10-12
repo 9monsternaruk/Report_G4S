@@ -36,7 +36,7 @@
       line-height: 32px;
     }
 
-    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) - แก้ไขใหม่เพื่อป้องกันแครชบน iPad/iOS */
+    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) - ปรับปรุงสำหรับ iPad Safari */
     @media print {
       @page {
         size: A4 portrait;
@@ -49,6 +49,8 @@
         margin: 0 !important;
         height: auto !important;
         overflow: visible !important;
+        -webkit-print-color-adjust: exact; /* บังคับแสดงสีสำหรับ iOS */
+        print-color-adjust: exact;
       }
       
       main {
@@ -62,13 +64,13 @@
         display: none !important; 
       }
       
-      /* สำคัญมาก: ห้ามใช้ Flex ตอนพิมพ์เด็ดขาดเพื่อแก้บัก Safari iOS */
+      /* บังคับคอนเทนเนอร์ให้เป็น Block เพื่อกันบั๊กหน้าว่าง */
       #export-section, #exportContainer { 
         display: block !important; 
         width: 100% !important;
       }
 
-      /* บังคับไม่ให้การ์ดถูกตัดกลางกระดาษ */
+      /* ป้องกันการ์ดตัดกลางแผ่น */
       .log-card { 
         display: block !important;
         page-break-inside: avoid !important;
@@ -84,7 +86,7 @@
       .log-card img {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        max-height: 250px !important;
+        max-height: 250px !important; /* คุมขนาดรูปไม่ให้ใหญ่จนล้นกระดาษ */
       }
 
       .print-header {
@@ -162,10 +164,10 @@
         </div>
 
         <div class="flex gap-3">
-          <button id="btnCancel" onclick="cancelEdit()" class="hidden flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-3 rounded-xl transition items-center justify-center">
+          <button type="button" id="btnCancel" onclick="cancelEdit()" class="hidden flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-3 rounded-xl transition items-center justify-center">
             ยกเลิก
           </button>
-          <button id="btnSubmit" onclick="submitLog()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-emerald-500/30 transition flex items-center justify-center gap-2">
+          <button type="button" id="btnSubmit" onclick="submitLog()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-emerald-500/30 transition flex items-center justify-center gap-2">
             <i data-lucide="save" class="w-5 h-5"></i>
             <span>บันทึกข้อมูล</span>
           </button>
@@ -187,7 +189,7 @@
       <!-- ส่วนนำเข้าข้อมูลจาก Google Sheets -->
       <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center justify-center no-print pb-8">
         <p class="text-xs text-slate-500 mb-3 text-center">ย้ายข้อมูลจากระบบเดิม (Google Sheets) <br>ID: 1-1F8YpcJvM... </p>
-        <button onclick="startGoogleSheetsImport()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-indigo-100">
+        <button type="button" onclick="startGoogleSheetsImport()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-indigo-100">
           <i data-lucide="download-cloud" class="w-4 h-4"></i> ดึงข้อมูลเก่าลง Firebase
         </button>
       </div>
@@ -199,8 +201,8 @@
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
         
-        <!-- เปลี่ยนปุ่มกลับไปใช้คำสั่งที่รองรับทุกอุปกรณ์ -->
-        <button id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
+        <!-- แก้ไขปุ่มเพื่อใช้ฟังก์ชัน forcePrint แทน -->
+        <button type="button" id="btnPrint" onclick="forcePrint()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
           <i data-lucide="printer" class="w-5 h-5"></i>
           <span>พิมพ์รายงาน A4 (PDF)</span>
         </button>
@@ -236,15 +238,15 @@
   <!-- Bottom Navigation -->
   <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-50 no-print shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
     <div class="max-w-2xl mx-auto flex justify-around">
-      <button onclick="switchTab('write', this)" class="nav-btn active flex-1 py-3 flex flex-col items-center gap-1 text-emerald-600 transition-colors">
+      <button type="button" onclick="switchTab('write', this)" class="nav-btn active flex-1 py-3 flex flex-col items-center gap-1 text-emerald-600 transition-colors">
         <i data-lucide="pen-line" class="w-6 h-6"></i>
         <span class="text-[11px] font-medium">ลงบันทึก</span>
       </button>
-      <button onclick="switchTab('read', this)" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
+      <button type="button" onclick="switchTab('read', this)" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
         <i data-lucide="list" class="w-6 h-6"></i>
         <span class="text-[11px] font-medium">เปิดอ่าน</span>
       </button>
-      <button onclick="switchTab('export', this)" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
+      <button type="button" onclick="switchTab('export', this)" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
         <i data-lucide="file-text" class="w-6 h-6"></i>
         <span class="text-[11px] font-medium">ออกรายงาน</span>
       </button>
@@ -265,8 +267,8 @@
       <h3 class="text-lg font-bold text-center text-slate-800 mb-2">ยืนยันการลบ?</h3>
       <p class="text-sm text-slate-500 text-center mb-6">รายงานนี้จะถูกลบอย่างถาวรและไม่สามารถกู้คืนได้</p>
       <div class="flex gap-3">
-        <button onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition">ยกเลิก</button>
-        <button id="btnConfirmAction" class="flex-1 py-2.5 rounded-xl font-medium text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-500/30 transition">ลบข้อมูล</button>
+        <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition">ยกเลิก</button>
+        <button type="button" id="btnConfirmAction" class="flex-1 py-2.5 rounded-xl font-medium text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-500/30 transition">ลบข้อมูล</button>
       </div>
     </div>
   </div>
@@ -277,7 +279,7 @@
       <i data-lucide="loader-2" class="w-10 h-10 text-emerald-500 animate-spin mb-4"></i>
       <h3 class="text-slate-800 font-bold mb-1" id="loadingTitle">กำลังประมวลผล</h3>
       <p class="text-slate-500 text-sm text-center" id="loadingDesc">กรุณารอสักครู่...</p>
-      <button onclick="hideLoadingModal()" class="mt-4 text-xs text-slate-400 hover:text-slate-600 underline">ยกเลิก/ปิดหน้าต่าง</button>
+      <button type="button" onclick="hideLoadingModal()" class="mt-4 text-xs text-slate-400 hover:text-slate-600 underline">ยกเลิก/ปิดหน้าต่าง</button>
     </div>
   </div>
 
@@ -300,7 +302,7 @@
     const db = getFirestore(app);
 
     let currentUserId = null;
-    let dbPath = 'daily_reports'; // <--- แก้ไขจุดนี้: บันทึกลงโฟลเดอร์กลาง ไม่แยกตามผู้ใช้
+    let dbPath = 'daily_reports'; // บันทึกลงโฟลเดอร์กลาง เพื่อให้ทุกเครื่องเปิดดูข้อมูลเดียวกัน
     let allLogs = []; 
     let currentTabId = 'write';
     let editDocumentId = null;
@@ -314,11 +316,6 @@
       try {
         const userCred = await signInAnonymously(auth);
         currentUserId = userCred.user.uid;
-        
-        // เราจะไม่เอา ID ของเครื่องมือถือมาสร้างเป็นโฟลเดอร์อีกต่อไป 
-        // เพื่อให้ทุกอุปกรณ์ที่เปิดเว็บนี้เห็นฐานข้อมูลก้อนเดียวกัน
-        dbPath = `daily_reports`; 
-
         setupRealtimeListener();
       } catch (error) {
         console.error("Auth failed:", error);
@@ -559,10 +556,10 @@
             </div>
             
             <div class="flex gap-2">
-              <button onclick="editLog('${log.id}', '${log.date}', '${log.time}', \`${escapeHTML(log.detail).replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`)" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="แก้ไข">
+              <button type="button" onclick="editLog('${log.id}', '${log.date}', '${log.time}', \`${escapeHTML(log.detail).replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`)" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="แก้ไข">
                 <i data-lucide="edit-3" class="w-4 h-4"></i>
               </button>
-              <button onclick="openDeleteModal('${log.id}')" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="ลบ">
+              <button type="button" onclick="openDeleteModal('${log.id}')" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="ลบ">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </div>
@@ -610,6 +607,31 @@
       }
       
       lucide.createIcons();
+    }
+
+    // ฟังก์ชันสั่งพิมพ์ (แก้ไขปัญหา iOS Safari)
+    window.forcePrint = function() {
+      const btn = document.getElementById('btnPrint');
+      const originalHtml = btn.innerHTML;
+      
+      // เปลี่ยนปุ่มเป็นสถานะกำลังโหลด
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>กำลังประมวลผล PDF...</span>`;
+      lucide.createIcons();
+      
+      // หน่วงเวลาเล็กน้อยเพื่อให้ DOM ของ iOS Safari อัปเดตและพร้อมสำหรับการเปิด Dialog
+      setTimeout(() => {
+        try {
+          window.print();
+        } catch (e) {
+          alert("บราวเซอร์ของคุณไม่รองรับคำสั่งพิมพ์อัตโนมัติ: " + e.message);
+        } finally {
+          // คืนสถานะปุ่มกลับมาเหมือนเดิม
+          setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            lucide.createIcons();
+          }, 1000);
+        }
+      }, 300);
     }
 
     window.editLog = function(id, date, time, detail) {
