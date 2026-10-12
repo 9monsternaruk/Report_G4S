@@ -35,36 +35,54 @@
       line-height: 32px;
     }
 
-    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) */
+    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) - แก้ไขใหม่เพื่อป้องกันการตัดกลางแผ่น */
     @media print {
       @page {
         size: A4 portrait;
-        margin: 15mm 15mm 20mm 15mm;
+        margin: 15mm;
       }
       
-      body { 
+      html, body { 
         background-color: white !important; 
-        padding-bottom: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
       }
       
-      .no-print, nav, #header-bar, .toast, .modal, #loadingModal { 
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .no-print, nav, #header-bar, .toast, .modal, #loadingModal, #write-section, #read-section { 
         display: none !important; 
       }
       
-      #export-section { 
-        display: block !important; 
+      #export-section, #exportContainer { 
+        display: block !important; /* สำคัญมาก: ห้ามใช้ Flex ตอนพิมพ์ */
         width: 100% !important;
       }
 
       .log-card { 
+        display: block !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        -webkit-column-break-inside: avoid;
         border: 1px solid #e2e8f0 !important;
         box-shadow: none !important;
         margin-bottom: 15px !important;
+        padding-bottom: 15px !important;
         background-color: white !important;
       }
       
+      .log-card img {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        max-height: 250px !important;
+      }
+
       .print-header {
         display: block !important;
         text-align: center;
@@ -169,7 +187,8 @@
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
         
-        <button id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
+        <!-- แก้ไข: เพิ่ม setTimeout ให้บราวเซอร์มีเวลาโหลด CSS ทันก่อนเปิดหน้าต่าง Print -->
+        <button id="btnPrint" onclick="setTimeout(() => window.print(), 200)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
           <i data-lucide="printer" class="w-5 h-5"></i>
           <span>พิมพ์รายงาน A4 (PDF)</span>
         </button>
@@ -180,7 +199,8 @@
         <h2 class="text-xl font-bold text-black">รายงานผลการปฏิบัติงานประจำเดือน <span id="printMonthText"></span></h2>
       </div>
 
-      <div id="exportContainer" class="flex flex-col gap-2 print:gap-0">
+      <!-- แก้ไข: ลบ print:gap-0 และใช้ print:block แทนเพื่อไม่ให้ Flexbox ทำงานตอนพิมพ์ -->
+      <div id="exportContainer" class="flex flex-col gap-2 print:block">
         <!-- Logs for export will be injected here -->
       </div>
       
@@ -219,7 +239,7 @@
     </div>
   </nav>
 
-  <!-- Toast Notification (แก้ไขบั๊กการแสดงผลแล้ว) -->
+  <!-- Toast Notification -->
   <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 text-white px-4 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 w-max max-w-[90%]">
     <!-- เนื้อหาจะถูกแทรกด้วย JavaScript -->
   </div>
@@ -331,26 +351,21 @@
       document.getElementById('exportMonth').value = monthKey;
     }
 
-    // ฟังก์ชัน Toast ที่แก้บั๊กการ render รูปภาพไอคอน
     window.showToast = function(message, type = "success") {
       const toast = document.getElementById('toast');
       const isError = (type === 'error');
       const bgClass = isError ? 'bg-red-600' : 'bg-slate-800';
       const iconName = isError ? 'alert-triangle' : 'check-circle';
       
-      // สร้างเนื้อหาใหม่ทั้งหมดทุกครั้ง
       toast.innerHTML = `
         <i data-lucide="${iconName}" class="w-5 h-5 shrink-0"></i>
         <span id="toastMsg">${escapeHTML(message)}</span>
       `;
       
-      // กำหนดคลาสใหม่
       toast.className = `fixed top-5 left-1/2 -translate-x-1/2 ${bgClass} text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]`;
       
-      // ให้ Lucide วาดไอคอนใหม่
       lucide.createIcons();
 
-      // ซ่อนข้อความ
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('-translate-y-24', 'opacity-0');
@@ -834,7 +849,6 @@
       } catch (error) {
         console.error("Import Error Details:", error);
         hideLoadingModal();
-        // ข้อความจะถูกส่งไปแสดงที่ Toast และคราวนี้จะไม่พังแล้ว
         showToast(`ล้มเหลว: ${error.message}`, "error");
       }
     }
