@@ -10,10 +10,10 @@
 
   <style>
     :root {
-      --primary: #10b981; /* Emerald 500 */
-      --primary-dark: #059669; /* Emerald 600 */
-      --bg: #f8fafc; /* Slate 50 */
-      --text: #334155; /* Slate 700 */
+      --primary: #10b981; 
+      --primary-dark: #059669; 
+      --bg: #f8fafc; 
+      --text: #334155; 
     }
 
     body {
@@ -21,15 +21,13 @@
       background-color: var(--bg);
       color: var(--text);
       -webkit-tap-highlight-color: transparent;
-      padding-bottom: 90px; /* Space for bottom nav */
+      padding-bottom: 90px; 
     }
 
-    /* ซ่อน Scrollbar แต่ยังเลื่อนได้ */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-    /* Textarea เหมือนสมุดโน้ต */
     .notebook-paper {
       background-color: #fff;
       background-image: linear-gradient(#e2e8f0 1px, transparent 1px);
@@ -49,18 +47,15 @@
         padding-bottom: 0 !important;
       }
       
-      /* ซ่อน UI ที่ไม่จำเป็นตอนพิมพ์ */
-      .no-print, nav, #header-bar, .toast, .modal { 
+      .no-print, nav, #header-bar, .toast, .modal, #loadingModal { 
         display: none !important; 
       }
       
-      /* จัดการ Layout สำหรับรายงาน */
       #export-section { 
         display: block !important; 
         width: 100% !important;
       }
 
-      /* ป้องกันการตัดหน้ากลาง Card */
       .log-card { 
         page-break-inside: avoid !important;
         break-inside: avoid !important;
@@ -99,6 +94,7 @@
 
   <main class="max-w-2xl mx-auto p-4 w-full">
     
+    <!-- หน้าลงบันทึก -->
     <section id="write-section" class="tab-content block">
       <div id="editAlert" class="hidden mb-4 bg-amber-50 border-l-4 border-amber-500 p-3 rounded-md flex items-center">
         <i data-lucide="alert-circle" class="text-amber-500 mr-2 w-5 h-5"></i>
@@ -147,6 +143,7 @@
       </div>
     </section>
 
+    <!-- หน้าเปิดอ่าน -->
     <section id="read-section" class="tab-content hidden">
       <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 mb-4 sticky top-[60px] z-30">
         <label class="block text-xs font-medium text-slate-500 mb-1 text-center">แฟ้มบันทึกเดือน</label>
@@ -157,21 +154,22 @@
         <!-- Logs will be injected here -->
       </div>
 
-      <!-- เครื่องมือนำเข้าข้อมูลจาก Google Sheets เดิม -->
+      <!-- ส่วนนำเข้าข้อมูลจาก Google Sheets -->
       <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center justify-center no-print pb-8">
         <p class="text-xs text-slate-500 mb-3 text-center">ย้ายข้อมูลจากระบบเดิม (Google Sheets) <br>ID: 1-1F8YpcJvM... </p>
-        <button onclick="startGoogleSheetsImport()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+        <button onclick="startGoogleSheetsImport()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-indigo-100">
           <i data-lucide="download-cloud" class="w-4 h-4"></i> ดึงข้อมูลเก่าลง Firebase
         </button>
       </div>
     </section>
 
+    <!-- หน้าออกรายงาน -->
     <section id="export-section" class="tab-content hidden">
       <div class="no-print bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
         
-        <button id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2">
+        <button id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
           <i data-lucide="printer" class="w-5 h-5"></i>
           <span>พิมพ์รายงาน A4 (PDF)</span>
         </button>
@@ -203,6 +201,7 @@
 
   </main>
 
+  <!-- Bottom Navigation -->
   <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-50 no-print shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
     <div class="max-w-2xl mx-auto flex justify-around">
       <button onclick="switchTab('write', this)" class="nav-btn active flex-1 py-3 flex flex-col items-center gap-1 text-emerald-600 transition-colors">
@@ -220,10 +219,9 @@
     </div>
   </nav>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 w-max max-w-[90%]">
-    <i data-lucide="info" class="w-5 h-5 shrink-0"></i>
-    <span id="toastMsg">Message</span>
+  <!-- Toast Notification (แก้ไขบั๊กการแสดงผลแล้ว) -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 text-white px-4 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 w-max max-w-[90%]">
+    <!-- เนื้อหาจะถูกแทรกด้วย JavaScript -->
   </div>
 
   <!-- Confirm Delete Modal -->
@@ -241,22 +239,22 @@
     </div>
   </div>
 
-  <!-- Loading Modal (For Import/Heavy tasks) -->
+  <!-- Loading Modal -->
   <div id="loadingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-2xl max-w-xs w-full">
       <i data-lucide="loader-2" class="w-10 h-10 text-emerald-500 animate-spin mb-4"></i>
       <h3 class="text-slate-800 font-bold mb-1" id="loadingTitle">กำลังประมวลผล</h3>
       <p class="text-slate-500 text-sm text-center" id="loadingDesc">กรุณารอสักครู่...</p>
+      <button onclick="hideLoadingModal()" class="mt-4 text-xs text-slate-400 hover:text-slate-600 underline">ยกเลิก/ปิดหน้าต่าง</button>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // ค่า Config ที่คุณระบุ
-    const myFirebaseConfig = {
+    const firebaseConfig = {
       apiKey: "AIzaSyCXuj7Pl1JnBn2Y7BtyzkHHQm4MQH-isrM",
       authDomain: "time-attendance-69699.firebaseapp.com",
       projectId: "time-attendance-69699",
@@ -265,18 +263,16 @@
       appId: "1:793986547170:web:337bfe602d9b3e32f34dbb"
     };
 
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myFirebaseConfig;
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     let currentUserId = null;
-    let dbPath = 'daily_reports'; // Default path (will adapt if in sandbox)
+    let dbPath = 'daily_reports'; 
     let allLogs = []; 
     let currentTabId = 'write';
     let editDocumentId = null;
 
-    // ไอดีชีตที่คุณต้องการดึงข้อมูล
     const GOOGLE_SHEET_ID = "1-1F8YpcJvM7GGHRmpejjpptG7ht8G6PedYAxQ3_jwJU";
 
     lucide.createIcons();
@@ -284,18 +280,11 @@
 
     async function initSystem() {
       try {
-        if (typeof __initial_auth_token !== 'undefined') {
-          const userCred = await signInWithCustomToken(auth, __initial_auth_token);
-          currentUserId = userCred.user.uid;
-        } else {
-          const userCred = await signInAnonymously(auth);
-          currentUserId = userCred.user.uid;
-        }
-
-        // Adaptive path for security rules
-        if (typeof __app_id !== 'undefined') {
-          dbPath = `artifacts/${__app_id}/users/${currentUserId}/daily_reports`;
-        }
+        const userCred = await signInAnonymously(auth);
+        currentUserId = userCred.user.uid;
+        
+        // แยกข้อมูลรายบุคคล
+        dbPath = `users/${currentUserId}/daily_reports`;
 
         setupRealtimeListener();
       } catch (error) {
@@ -304,7 +293,6 @@
       }
     }
 
-    // ฟังการเปลี่ยนแปลงข้อมูลแบบเรียลไทม์ (หลักการดึงข้อมูลทั้งหมด แล้วกรองใน Client เพื่อลดภาระ DB)
     function setupRealtimeListener() {
       if (!currentUserId) return;
       
@@ -312,7 +300,7 @@
       onSnapshot(colRef, (snapshot) => {
         allLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // เรียงลำดับจากใหม่ไปเก่า (วันที่ และ เวลา)
+        // เรียงลำดับใหม่สุดขึ้นก่อน
         allLogs.sort((a, b) => {
           const dtA = new Date(`${a.date}T${a.time || '00:00'}`);
           const dtB = new Date(`${b.date}T${b.time || '00:00'}`);
@@ -343,26 +331,30 @@
       document.getElementById('exportMonth').value = monthKey;
     }
 
+    // ฟังก์ชัน Toast ที่แก้บั๊กการ render รูปภาพไอคอน
     window.showToast = function(message, type = "success") {
       const toast = document.getElementById('toast');
-      const msgEl = document.getElementById('toastMsg');
-      const icon = toast.querySelector('i');
+      const isError = (type === 'error');
+      const bgClass = isError ? 'bg-red-600' : 'bg-slate-800';
+      const iconName = isError ? 'alert-triangle' : 'check-circle';
       
-      msgEl.textContent = message;
+      // สร้างเนื้อหาใหม่ทั้งหมดทุกครั้ง
+      toast.innerHTML = `
+        <i data-lucide="${iconName}" class="w-5 h-5 shrink-0"></i>
+        <span id="toastMsg">${escapeHTML(message)}</span>
+      `;
       
-      if(type === 'error') {
-        toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-red-600 text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]";
-        icon.setAttribute('data-lucide', 'alert-triangle');
-      } else {
-        toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]";
-        icon.setAttribute('data-lucide', 'check-circle');
-      }
+      // กำหนดคลาสใหม่
+      toast.className = `fixed top-5 left-1/2 -translate-x-1/2 ${bgClass} text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]`;
+      
+      // ให้ Lucide วาดไอคอนใหม่
       lucide.createIcons();
 
+      // ซ่อนข้อความ
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('-translate-y-24', 'opacity-0');
-      }, 3000);
+      }, 4000);
     }
 
     function escapeHTML(str) {
@@ -375,7 +367,6 @@
     window.switchTab = function(tabId, btnElement) {
       currentTabId = tabId;
       
-      // Update Buttons
       document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active', 'text-emerald-600');
         btn.classList.add('text-slate-400');
@@ -383,7 +374,6 @@
       btnElement.classList.add('active', 'text-emerald-600');
       btnElement.classList.remove('text-slate-400');
 
-      // Update Sections
       document.querySelectorAll('.tab-content').forEach(section => {
         section.classList.remove('block');
         section.classList.add('hidden');
@@ -430,7 +420,7 @@
       lucide.createIcons();
 
       try {
-        const monthKey = dateVal.substring(0, 7); // YYYY-MM
+        const monthKey = dateVal.substring(0, 7);
         const logData = {
           date: dateVal,
           time: timeVal,
@@ -469,7 +459,6 @@
       }
     }
 
-    // Image Compression logic
     function compressImage(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -479,7 +468,7 @@
           img.src = event.target.result;
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800; // ลดขนาดเพื่อป้องกันเกิน 1MB limit ของ Firestore Document
+            const MAX_WIDTH = 800; 
             const MAX_HEIGHT = 800;
             let width = img.width;
             let height = img.height;
@@ -514,7 +503,6 @@
         ? `<div class="mt-3 rounded-lg overflow-hidden border border-slate-100"><img src="${log.imageUrl}" alt="รูปประกอบ" class="w-full h-auto object-contain max-h-64 bg-slate-50"></div>` 
         : '';
       
-      // การ์ดสำหรับโหมด Export จะดูเป็นทางการและมีเส้นคั่นระหว่างรายการ
       if (isExportMode) {
         return `
           <div class="log-card pt-2 pb-4 border-b border-slate-200 print:border-slate-300">
@@ -528,7 +516,6 @@
         `;
       }
 
-      // การ์ดสำหรับโหมด Read จะมีปุ่มลบ/แก้
       return `
         <div class="log-card bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group">
           <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
@@ -579,6 +566,7 @@
         const monthKey = document.getElementById('exportMonth').value;
         const filtered = allLogs.filter(log => log.monthKey === monthKey);
         const container = document.getElementById('exportContainer');
+        const btnPrint = document.getElementById('btnPrint');
         
         const [year, month] = monthKey.split('-');
         const thMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
@@ -586,10 +574,10 @@
 
         if (filtered.length === 0) {
           container.innerHTML = `<p class="text-center text-slate-400 py-10 text-sm">ไม่พบข้อมูลสำหรับจัดทำรายงาน</p>`;
-          document.getElementById('btnPrint').style.display = 'none';
+          btnPrint.style.display = 'none';
         } else {
           container.innerHTML = filtered.map(log => createLogCard(log, true)).join('');
-          document.getElementById('btnPrint').style.display = 'flex';
+          btnPrint.style.display = 'flex';
         }
       }
       
@@ -676,14 +664,14 @@
       }
     });
 
-    function showLoadingModal(title, desc) {
+    window.showLoadingModal = function(title, desc) {
       document.getElementById('loadingTitle').innerText = title;
       document.getElementById('loadingDesc').innerText = desc;
       document.getElementById('loadingModal').classList.remove('hidden');
       document.getElementById('loadingModal').classList.add('flex');
     }
 
-    function hideLoadingModal() {
+    window.hideLoadingModal = function() {
       document.getElementById('loadingModal').classList.add('hidden');
       document.getElementById('loadingModal').classList.remove('flex');
     }
@@ -694,127 +682,163 @@
          return;
       }
 
-      const conf = confirm("ต้องการดึงข้อมูลเก่าจาก Google Sheets ลงระบบใหม่ใช่หรือไม่?\n(คำแนะนำ: ชีตเก่าต้องเปิดสิทธิ์เป็น 'ทุกคนที่มีลิงก์สามารถอ่านได้')");
-      if(!conf) return;
+      const targetSheet = prompt("ต้องการดึงข้อมูลเก่าจาก Google Sheets ใช่หรือไม่?\n\nกรุณาพิมพ์ชื่อแท็บ(Sheet Name) ที่ต้องการดึงข้อมูลให้ถูกต้อง (เช่น 10_2026)\n*สำคัญมาก: ไฟล์ Sheet ต้องแชร์สิทธิ์เป็น 'ทุกคนที่มีลิงก์ (ผู้มีสิทธิ์อ่าน)'", "");
+      
+      if(targetSheet === null) return; 
 
-      showLoadingModal('กำลังดึงข้อมูล', 'กำลังอ่านข้อมูลจาก Google Sheets...');
+      showLoadingModal('กำลังดึงข้อมูล', 'กำลังเชื่อมต่อ Google Sheets...');
       
       try {
-        // ใช้ Google Visualization API ดึงข้อมูลเป็น JSON
-        const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json`;
+        let url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json`;
+        if (targetSheet.trim() !== "") {
+            url += `&sheet=${encodeURIComponent(targetSheet.trim())}`;
+        }
+        
         const response = await fetch(url);
+        
+        if (!response.ok) {
+           throw new Error(`การเชื่อมต่อถูกปฏิเสธ (Code: ${response.status}) โปรดตรวจสอบว่าเปิดแชร์ไฟล์แล้ว`);
+        }
+
         let textData = await response.text();
         
-        // รูปแบบที่ได้มาจะเป็น: /*O_o*/ google.visualization.Query.setResponse({ ...json... });
-        // ต้องทำการตัด String ให้เหลือแค่ JSON
-        textData = textData.substring(textData.indexOf('{'), textData.lastIndexOf('}') + 1);
-        const jsonData = JSON.parse(textData);
+        const startIdx = textData.indexOf('{');
+        const endIdx = textData.lastIndexOf('}') + 1;
         
+        if (startIdx === -1 || endIdx === 0) {
+            throw new Error(`ไม่พบข้อมูลในชีตชื่อ "${targetSheet}" อาจจะพิมพ์ชื่อผิด หรือชีตว่างเปล่า`);
+        }
+        
+        textData = textData.substring(startIdx, endIdx);
+        
+        let jsonData;
+        try {
+            jsonData = JSON.parse(textData);
+        } catch (e) {
+            throw new Error("โครงสร้างข้อมูลภายใน Sheet ผิดรูปแบบ");
+        }
+        
+        if (!jsonData.table || !jsonData.table.rows) {
+            throw new Error("ไม่พบตารางข้อมูล กรุณาตรวจสอบว่ามีข้อมูลใน Sheet หรือไม่");
+        }
+
         const rows = jsonData.table.rows;
-        if(!rows || rows.length === 0) {
+        if(rows.length === 0) {
            hideLoadingModal();
-           showToast("ไม่พบข้อมูลใน Sheet หรือชีตถูกจำกัดสิทธิ์", "error");
+           showToast(`ไม่พบข้อมูลในชีต "${targetSheet}"`, "error");
            return;
         }
 
-        document.getElementById('loadingDesc').innerText = `พบข้อมูล ${rows.length} รายการ กำลังบันทึก...`;
+        document.getElementById('loadingDesc').innerText = `พบข้อมูล ${rows.length} แถว กำลังบันทึก...`;
         
-        const colRef = collection(db, dbPath);
         let importedCount = 0;
+        let skippedCount = 0;
+        const colRef = collection(db, dbPath);
 
-        // วนลูปอ่านข้อมูล (สมมติฐาน โครงสร้างเดิม: A=Timestamp, B=Date, C=Time, D=Detail, E=Image, F=ID)
-        // หรือตามที่ Array จัดไว้: c[0] ถึง c[n]
         for(let i = 0; i < rows.length; i++) {
            const r = rows[i].c;
            if(!r) continue;
            
-           // พยายามดึงวันที่จากคอลัมน์ (ลองเดาว่า Date น่าจะอยู่คอลัมน์ 1)
-           // Format Date ที่ Google Viz คืนมา มักจะเป็น Date(YYYY, MM, DD) ถ้าเป็นชนิดวันที่
-           // หรือเป็น String ธรรมดา
+           const getVal = (colIndex) => {
+               if (r.length <= colIndex || !r[colIndex] || r[colIndex].v === null || r[colIndex].v === undefined) return "";
+               return r[colIndex].v.toString().trim();
+           };
+           
+           const getFormattedVal = (colIndex) => {
+               if (r.length <= colIndex || !r[colIndex] || !r[colIndex].f) return getVal(colIndex);
+               return r[colIndex].f.toString().trim();
+           }
+
+           let rawDate = getVal(1); 
+           let formattedDate = getFormattedVal(1);
            let dateVal = "";
-           let timeVal = "";
-           let detailVal = "";
-           let imageVal = null;
 
-           // Helper ในการอ่านค่า
-           const getVal = (col) => (col && col.v) ? col.v.toString().trim() : "";
-
-           // พยายามแกะโครงสร้างจากโค้ดเดิมของคุณ
-           // row[1]=Date, row[2]=Time, row[3]=Detail, row[4]=Image
-           // ดังนั้นใน JS Viz API คอลัมน์ก็จะไล่จาก 0,1,2,3...
-           let rawDate = getVal(r[1]); 
            if (rawDate.startsWith('Date(')) {
-              // Parse Date(2026, 9, 12) -> Month starts from 0 in JS
               const parts = rawDate.replace('Date(', '').replace(')', '').split(',');
-              const d = new Date(parts[0], parts[1], parts[2]);
-              dateVal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-           } else if (rawDate.includes('/')) {
-              // สมมติมาเป็น DD/MM/YYYY
-              const [dd, mm, yyyy] = rawDate.split('/');
-              if(yyyy) dateVal = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
-           } else if (rawDate.includes('-')) {
-              dateVal = rawDate.split('T')[0];
+              if (parts.length >= 3) {
+                  const d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+                  if (!isNaN(d.getTime())) {
+                      dateVal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                  }
+              }
+           } else if (formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              dateVal = formattedDate; 
+           } else if (rawDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              dateVal = rawDate;
+           } else if (formattedDate.includes('/')) {
+              const parts = formattedDate.split('/');
+              if (parts.length === 3) {
+                  let dd = parts[0], mm = parts[1], yyyy = parts[2];
+                  if (yyyy.length === 2) yyyy = "20" + yyyy; 
+                  dateVal = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+              }
            }
            
-           // ถ้ายังไม่ได้วันที่ ให้ใช้วันปัจจุบัน
-           if(!dateVal) continue; // ข้ามแถวที่ไม่มีวันที่
+           if(!dateVal) {
+               skippedCount++;
+               continue; 
+           }
 
-           // จัดการเวลา
-           let rawTime = getVal(r[2]);
-           if (Array.isArray(r[2]?.v)) { // กรณีเป็น time array [hh, mm, ss]
+           let rawTime = getVal(2);
+           let formattedTime = getFormattedVal(2);
+           let timeVal = "00:00";
+
+           if (Array.isArray(r[2]?.v)) { 
               const tArr = r[2].v;
               timeVal = `${String(tArr[0]).padStart(2, '0')}:${String(tArr[1]).padStart(2, '0')}`;
-           } else {
-              timeVal = rawTime.substring(0, 5); // เอาแค่ HH:mm
+           } else if (formattedTime.match(/^\d{1,2}:\d{2}/)) {
+              timeVal = formattedTime.substring(0, 5).padStart(5, '0');
+           } else if (rawTime.match(/^\d{1,2}:\d{2}/)) {
+              timeVal = rawTime.substring(0, 5).padStart(5, '0');
            }
 
-           detailVal = getVal(r[3]);
-           
-           // ตรวจสอบรูปภาพ
-           if (r[4] && r[4].v) {
-              imageVal = r[4].v.toString();
+           let detailVal = getVal(3);
+           let imageVal = getVal(4);
+
+           if (!detailVal) {
+               skippedCount++;
+               continue; 
            }
 
-           // เตรียมข้อมูลส่ง Firebase
            const monthKey = dateVal.substring(0, 7);
            const logData = {
               date: dateVal,
-              time: timeVal || '00:00',
+              time: timeVal,
               monthKey: monthKey,
               detail: detailVal,
               timestamp: new Date().toISOString()
            };
 
-           if(imageVal && imageVal.startsWith('data:image')) {
-              logData.imageUrl = imageVal; // ถ้าเป็น base64 เดิม
-           } else if (imageVal && imageVal.startsWith('http')) {
-              logData.imageUrl = imageVal; // ถ้าเป็น URL รูปภาพ
+           if(imageVal && (imageVal.startsWith('data:image') || imageVal.startsWith('http'))) {
+              logData.imageUrl = imageVal;
            }
 
-           // ตรวจสอบว่ามีข้อมูลซ้ำไหม (เช็คจาก Memory)
            const isExist = allLogs.find(l => l.date === dateVal && l.time === logData.time && l.detail === detailVal);
            
-           if(!isExist && detailVal) {
+           if(!isExist) {
              await addDoc(colRef, logData);
              importedCount++;
+             if (importedCount % 5 === 0) {
+                 document.getElementById('loadingDesc').innerText = `กำลังดึงข้อมูล... ได้ ${importedCount} รายการแล้ว`;
+             }
+           } else {
+               skippedCount++;
            }
         }
         
         hideLoadingModal();
-        if(importedCount > 0) {
-           showToast(`ดึงข้อมูลสำเร็จ ${importedCount} รายการ`);
-        } else {
-           showToast("ไม่มีข้อมูลใหม่ หรือดึงข้อมูลมาครบหมดแล้ว");
-        }
+        let msg = `นำเข้าสำเร็จ ${importedCount} รายการ`;
+        if (skippedCount > 0) msg += ` (ซ้ำ/ข้าม ${skippedCount} รายการ)`;
+        showToast(msg);
 
       } catch (error) {
-        console.error("Import Error:", error);
+        console.error("Import Error Details:", error);
         hideLoadingModal();
-        showToast("นำเข้าล้มเหลว (ตรวจสอบสิทธิ์ Sheet)", "error");
+        // ข้อความจะถูกส่งไปแสดงที่ Toast และคราวนี้จะไม่พังแล้ว
+        showToast(`ล้มเหลว: ${error.message}`, "error");
       }
     }
 
-    // เริ่มระบบ
     initSystem();
 
   </script>
