@@ -70,23 +70,27 @@
         width: 100% !important;
       }
 
-      /* ป้องกันการ์ดตัดกลางแผ่น */
+      /* ป้องกันการ์ดตัดกลางแผ่น ลบล้างการจัดรูปแบบที่ไม่รองรับ */
       .log-card { 
         display: block !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         -webkit-column-break-inside: avoid;
-        border: 1px solid #e2e8f0 !important;
+        border: none !important; 
+        border-bottom: 1px solid #cbd5e1 !important; /* ใช้เส้นใต้คั่นแต่ละรายการแทนกล่อง */
         box-shadow: none !important;
-        margin-bottom: 15px !important;
+        margin-bottom: 20px !important;
         padding-bottom: 15px !important;
         background-color: white !important;
       }
       
       .log-card img {
+        display: block !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         max-height: 250px !important; /* คุมขนาดรูปไม่ให้ใหญ่จนล้นกระดาษ */
+        object-fit: contain !important;
+        margin-top: 10px !important;
       }
 
       .print-header {
@@ -96,12 +100,22 @@
         font-weight: bold;
       }
       
+      /* ปรับโครงสร้างลายเซ็นใหม่ ให้พิมพ์ง่ายไม่เคลื่อน */
       .print-footer {
-        display: flex !important;
-        justify-content: space-between !important;
-        margin-top: 30px !important;
-        padding: 0 40px !important;
-        page-break-inside: avoid !important;
+        display: block !important;
+        width: 100% !important;
+        margin-top: 40px !important;
+        padding: 0 !important;
+        page-break-inside: avoid !important; /* ป้องกันโดนตัดหน้ากลางลายเซ็น */
+        break-inside: avoid !important;
+        text-align: center !important;
+      }
+
+      .print-footer-box {
+        display: inline-block !important;
+        width: 45% !important;
+        vertical-align: top !important;
+        text-align: center !important;
       }
     }
 
@@ -201,7 +215,6 @@
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
         
-        <!-- แก้ไข: ลบ setTimeout ออก แล้วใช้คำสั่ง window.print() ทันทีเพื่อให้ iOS ยอมเปิด Dialog -->
         <button type="button" id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
           <i data-lucide="printer" class="w-5 h-5"></i>
           <span>พิมพ์รายงาน A4 (PDF)</span>
@@ -218,14 +231,14 @@
         <!-- Logs for export will be injected here -->
       </div>
       
-      <!-- ส่วนท้ายลายเซ็น (แสดงเฉพาะตอน Print) -->
-      <div class="hidden print-footer mt-12 pt-8 px-12">
-        <div class="text-center">
+      <!-- ส่วนท้ายลายเซ็น (แสดงเฉพาะตอน Print) ปรับโครงสร้างใหม่ให้เป็น Inline-Block -->
+      <div class="hidden print-footer mt-12 pt-8">
+        <div class="print-footer-box">
           <p class="mb-8">ลงชื่อ................................................ผู้รายงาน</p>
           <p>(................................................)</p>
           <p class="text-sm mt-1">ตำแหน่ง................................................</p>
         </div>
-        <div class="text-center">
+        <div class="print-footer-box">
           <p class="mb-8">ลงชื่อ................................................ผู้รับทราบ</p>
           <p>(................................................)</p>
           <p class="text-sm mt-1">ตำแหน่ง................................................</p>
@@ -302,7 +315,7 @@
     const db = getFirestore(app);
 
     let currentUserId = null;
-    let dbPath = 'daily_reports'; // บันทึกลงโฟลเดอร์กลาง เพื่อให้ทุกเครื่องเปิดดูข้อมูลเดียวกัน
+    let dbPath = 'daily_reports'; 
     let allLogs = []; 
     let currentTabId = 'write';
     let editDocumentId = null;
@@ -330,7 +343,6 @@
       onSnapshot(colRef, (snapshot) => {
         allLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // เรียงลำดับใหม่สุดขึ้นก่อน
         allLogs.sort((a, b) => {
           const dtA = new Date(`${a.date}T${a.time || '00:00'}`);
           const dtB = new Date(`${b.date}T${b.time || '00:00'}`);
@@ -529,13 +541,14 @@
         : '';
       
       if (isExportMode) {
+        // แก้ไข: ถอดคลาส flex ออกตอนปริ้นท์ และเพิ่ม whitespace-pre-wrap ให้อ่านง่ายขึ้น
         return `
-          <div class="log-card pt-2 pb-4 border-b border-slate-200">
-            <div class="flex items-center text-sm font-medium text-slate-800 mb-1">
+          <div class="log-card pt-2 pb-4">
+            <div class="block text-sm font-medium text-slate-800 mb-2">
               <span class="mr-2">${thDate}</span>
               <span class="text-slate-500">เวลา ${log.time} น.</span>
             </div>
-            <div class="text-[15px] leading-relaxed text-slate-800 break-words">${safeDetail}</div>
+            <div class="text-[15px] leading-relaxed text-slate-800 break-words whitespace-pre-wrap">${safeDetail}</div>
             ${imgHtml}
           </div>
         `;
@@ -786,9 +799,7 @@
                       dateVal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                   }
               }
-           } else if (formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-              dateVal = formattedDate; 
-           } else if (rawDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+           } else if (formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {               dateVal = formattedDate;             } else if (rawDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
               dateVal = rawDate;
            } else if (formattedDate.includes('/')) {
               const parts = formattedDate.split('/');
