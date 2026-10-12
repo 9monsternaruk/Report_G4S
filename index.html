@@ -201,8 +201,8 @@
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
         
-        <!-- แก้ไขปุ่มเพื่อใช้ฟังก์ชัน forcePrint แทน -->
-        <button type="button" id="btnPrint" onclick="forcePrint()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
+        <!-- แก้ไข: ลบ setTimeout ออก แล้วใช้คำสั่ง window.print() ทันทีเพื่อให้ iOS ยอมเปิด Dialog -->
+        <button type="button" id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
           <i data-lucide="printer" class="w-5 h-5"></i>
           <span>พิมพ์รายงาน A4 (PDF)</span>
         </button>
@@ -607,31 +607,6 @@
       }
       
       lucide.createIcons();
-    }
-
-    // ฟังก์ชันสั่งพิมพ์ (แก้ไขปัญหา iOS Safari)
-    window.forcePrint = function() {
-      const btn = document.getElementById('btnPrint');
-      const originalHtml = btn.innerHTML;
-      
-      // เปลี่ยนปุ่มเป็นสถานะกำลังโหลด
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>กำลังประมวลผล PDF...</span>`;
-      lucide.createIcons();
-      
-      // หน่วงเวลาเล็กน้อยเพื่อให้ DOM ของ iOS Safari อัปเดตและพร้อมสำหรับการเปิด Dialog
-      setTimeout(() => {
-        try {
-          window.print();
-        } catch (e) {
-          alert("บราวเซอร์ของคุณไม่รองรับคำสั่งพิมพ์อัตโนมัติ: " + e.message);
-        } finally {
-          // คืนสถานะปุ่มกลับมาเหมือนเดิม
-          setTimeout(() => {
-            btn.innerHTML = originalHtml;
-            lucide.createIcons();
-          }, 1000);
-        }
-      }, 300);
     }
 
     window.editLog = function(id, date, time, detail) {
