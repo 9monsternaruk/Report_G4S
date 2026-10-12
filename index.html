@@ -1,1 +1,822 @@
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>สมุดบันทึกรายงานประจำวัน</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
+  <style>
+    :root {
+      --primary: #10b981; /* Emerald 500 */
+      --primary-dark: #059669; /* Emerald 600 */
+      --bg: #f8fafc; /* Slate 50 */
+      --text: #334155; /* Slate 700 */
+    }
+
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: 90px; /* Space for bottom nav */
+    }
+
+    /* ซ่อน Scrollbar แต่ยังเลื่อนได้ */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Textarea เหมือนสมุดโน้ต */
+    .notebook-paper {
+      background-color: #fff;
+      background-image: linear-gradient(#e2e8f0 1px, transparent 1px);
+      background-size: 100% 32px;
+      line-height: 32px;
+    }
+
+    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 15mm 15mm 20mm 15mm;
+      }
+      
+      body { 
+        background-color: white !important; 
+        padding-bottom: 0 !important;
+      }
+      
+      /* ซ่อน UI ที่ไม่จำเป็นตอนพิมพ์ */
+      .no-print, nav, #header-bar, .toast, .modal { 
+        display: none !important; 
+      }
+      
+      /* จัดการ Layout สำหรับรายงาน */
+      #export-section { 
+        display: block !important; 
+        width: 100% !important;
+      }
+
+      /* ป้องกันการตัดหน้ากลาง Card */
+      .log-card { 
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+        margin-bottom: 15px !important;
+        background-color: white !important;
+      }
+      
+      .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-emerald-200 selection:text-emerald-900">
+
+  <header id="header-bar" class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm no-print">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-center">
+      <i data-lucide="book-open-check" class="text-emerald-500 mr-2"></i>
+      <h1 class="text-lg font-semibold text-slate-800">สมุดบันทึกรายงาน</h1>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto p-4 w-full">
+    
+    <section id="write-section" class="tab-content block">
+      <div id="editAlert" class="hidden mb-4 bg-amber-50 border-l-4 border-amber-500 p-3 rounded-md flex items-center">
+        <i data-lucide="alert-circle" class="text-amber-500 mr-2 w-5 h-5"></i>
+        <span class="text-sm text-amber-800 font-medium">กำลังแก้ไขข้อมูลบันทึกย้อนหลัง</span>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-4">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">วันที่</label>
+            <input type="date" id="logDate" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">เวลา</label>
+            <input type="time" id="logTime" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-slate-600 mb-1">รายละเอียดการปฏิบัติงาน</label>
+          <textarea id="logDetail" class="notebook-paper w-full min-h-[160px] border border-slate-200 rounded-xl px-4 py-2 resize-none focus:outline-none focus:border-emerald-400 transition" placeholder="เขียนรายงานเหตุการณ์ที่นี่..."></textarea>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-slate-600 mb-1">แนบรูปภาพ (ถ้ามี)</label>
+          <div class="flex items-center justify-center w-full">
+            <label for="logImage" class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+              <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                <i data-lucide="image-plus" class="w-6 h-6 text-slate-400 mb-2"></i>
+                <p class="text-xs text-slate-500" id="fileNameDisplay">แตะเพื่อเลือกรูปภาพ</p>
+              </div>
+              <input id="logImage" type="file" accept="image/*" class="hidden" onchange="handleFileSelect(event)" />
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button id="btnCancel" onclick="cancelEdit()" class="hidden flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-3 rounded-xl transition items-center justify-center">
+            ยกเลิก
+          </button>
+          <button id="btnSubmit" onclick="submitLog()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-emerald-500/30 transition flex items-center justify-center gap-2">
+            <i data-lucide="save" class="w-5 h-5"></i>
+            <span>บันทึกข้อมูล</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="read-section" class="tab-content hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 mb-4 sticky top-[60px] z-30">
+        <label class="block text-xs font-medium text-slate-500 mb-1 text-center">แฟ้มบันทึกเดือน</label>
+        <input type="month" id="readMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="renderUI()">
+      </div>
+      
+      <div id="readContainer" class="flex flex-col gap-3">
+        <!-- Logs will be injected here -->
+      </div>
+
+      <!-- เครื่องมือนำเข้าข้อมูลจาก Google Sheets เดิม -->
+      <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center justify-center no-print pb-8">
+        <p class="text-xs text-slate-500 mb-3 text-center">ย้ายข้อมูลจากระบบเดิม (Google Sheets) <br>ID: 1-1F8YpcJvM... </p>
+        <button onclick="startGoogleSheetsImport()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+          <i data-lucide="download-cloud" class="w-4 h-4"></i> ดึงข้อมูลเก่าลง Firebase
+        </button>
+      </div>
+    </section>
+
+    <section id="export-section" class="tab-content hidden">
+      <div class="no-print bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
+        <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
+        <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
+        
+        <button id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2">
+          <i data-lucide="printer" class="w-5 h-5"></i>
+          <span>พิมพ์รายงาน A4 (PDF)</span>
+        </button>
+      </div>
+
+      <!-- ส่วนหัวของรายงานตอนพิมพ์ (แสดงเฉพาะตอน Print) -->
+      <div class="hidden print-header text-center mb-6">
+        <h2 class="text-xl font-bold text-black">รายงานผลการปฏิบัติงานประจำเดือน <span id="printMonthText"></span></h2>
+      </div>
+
+      <div id="exportContainer" class="flex flex-col gap-2 print:gap-0">
+        <!-- Logs for export will be injected here -->
+      </div>
+      
+      <!-- ส่วนท้ายลายเซ็น (แสดงเฉพาะตอน Print) -->
+      <div class="hidden print:flex justify-between mt-12 pt-8 px-12">
+        <div class="text-center">
+          <p class="mb-8">ลงชื่อ................................................ผู้รายงาน</p>
+          <p>(................................................)</p>
+          <p class="text-sm mt-1">ตำแหน่ง................................................</p>
+        </div>
+        <div class="text-center">
+          <p class="mb-8">ลงชื่อ................................................ผู้รับทราบ</p>
+          <p>(................................................)</p>
+          <p class="text-sm mt-1">ตำแหน่ง................................................</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-50 no-print shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+    <div class="max-w-2xl mx-auto flex justify-around">
+      <button onclick="switchTab('write', this)" class="nav-btn active flex-1 py-3 flex flex-col items-center gap-1 text-emerald-600 transition-colors">
+        <i data-lucide="pen-line" class="w-6 h-6"></i>
+        <span class="text-[11px] font-medium">ลงบันทึก</span>
+      </button>
+      <button onclick="switchTab('read', this)" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
+        <i data-lucide="list" class="w-6 h-6"></i>
+        <span class="text-[11px] font-medium">เปิดอ่าน</span>
+      </button>
+      <button onclick="switchTab('export', this)" class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
+        <i data-lucide="file-text" class="w-6 h-6"></i>
+        <span class="text-[11px] font-medium">ออกรายงาน</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 w-max max-w-[90%]">
+    <i data-lucide="info" class="w-5 h-5 shrink-0"></i>
+    <span id="toastMsg">Message</span>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 opacity-0 transition-opacity">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 transform scale-95 transition-transform" id="confirmModalBox">
+      <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center mb-4 mx-auto">
+        <i data-lucide="trash-2" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-lg font-bold text-center text-slate-800 mb-2">ยืนยันการลบ?</h3>
+      <p class="text-sm text-slate-500 text-center mb-6">รายงานนี้จะถูกลบอย่างถาวรและไม่สามารถกู้คืนได้</p>
+      <div class="flex gap-3">
+        <button onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition">ยกเลิก</button>
+        <button id="btnConfirmAction" class="flex-1 py-2.5 rounded-xl font-medium text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-500/30 transition">ลบข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Modal (For Import/Heavy tasks) -->
+  <div id="loadingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-2xl max-w-xs w-full">
+      <i data-lucide="loader-2" class="w-10 h-10 text-emerald-500 animate-spin mb-4"></i>
+      <h3 class="text-slate-800 font-bold mb-1" id="loadingTitle">กำลังประมวลผล</h3>
+      <p class="text-slate-500 text-sm text-center" id="loadingDesc">กรุณารอสักครู่...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // ค่า Config ที่คุณระบุ
+    const myFirebaseConfig = {
+      apiKey: "AIzaSyCXuj7Pl1JnBn2Y7BtyzkHHQm4MQH-isrM",
+      authDomain: "time-attendance-69699.firebaseapp.com",
+      projectId: "time-attendance-69699",
+      storageBucket: "time-attendance-69699.firebasestorage.app",
+      messagingSenderId: "793986547170",
+      appId: "1:793986547170:web:337bfe602d9b3e32f34dbb"
+    };
+
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myFirebaseConfig;
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUserId = null;
+    let dbPath = 'daily_reports'; // Default path (will adapt if in sandbox)
+    let allLogs = []; 
+    let currentTabId = 'write';
+    let editDocumentId = null;
+
+    // ไอดีชีตที่คุณต้องการดึงข้อมูล
+    const GOOGLE_SHEET_ID = "1-1F8YpcJvM7GGHRmpejjpptG7ht8G6PedYAxQ3_jwJU";
+
+    lucide.createIcons();
+    initCurrentTime();
+
+    async function initSystem() {
+      try {
+        if (typeof __initial_auth_token !== 'undefined') {
+          const userCred = await signInWithCustomToken(auth, __initial_auth_token);
+          currentUserId = userCred.user.uid;
+        } else {
+          const userCred = await signInAnonymously(auth);
+          currentUserId = userCred.user.uid;
+        }
+
+        // Adaptive path for security rules
+        if (typeof __app_id !== 'undefined') {
+          dbPath = `artifacts/${__app_id}/users/${currentUserId}/daily_reports`;
+        }
+
+        setupRealtimeListener();
+      } catch (error) {
+        console.error("Auth failed:", error);
+        showToast("ไม่สามารถเชื่อมต่อฐานข้อมูลได้", "error");
+      }
+    }
+
+    // ฟังการเปลี่ยนแปลงข้อมูลแบบเรียลไทม์ (หลักการดึงข้อมูลทั้งหมด แล้วกรองใน Client เพื่อลดภาระ DB)
+    function setupRealtimeListener() {
+      if (!currentUserId) return;
+      
+      const colRef = collection(db, dbPath);
+      onSnapshot(colRef, (snapshot) => {
+        allLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // เรียงลำดับจากใหม่ไปเก่า (วันที่ และ เวลา)
+        allLogs.sort((a, b) => {
+          const dtA = new Date(`${a.date}T${a.time || '00:00'}`);
+          const dtB = new Date(`${b.date}T${b.time || '00:00'}`);
+          return dtB - dtA;
+        });
+
+        window.renderUI();
+      }, (error) => {
+        console.error("Realtime Error:", error);
+      });
+    }
+
+    function initCurrentTime() {
+      const now = new Date();
+      const bkkTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Bangkok"}));
+      
+      const year = bkkTime.getFullYear();
+      const month = String(bkkTime.getMonth() + 1).padStart(2, '0');
+      const day = String(bkkTime.getDate()).padStart(2, '0');
+      const hours = String(bkkTime.getHours()).padStart(2, '0');
+      const minutes = String(bkkTime.getMinutes()).padStart(2, '0');
+      
+      document.getElementById('logDate').value = `${year}-${month}-${day}`;
+      document.getElementById('logTime').value = `${hours}:${minutes}`;
+      
+      const monthKey = `${year}-${month}`;
+      document.getElementById('readMonth').value = monthKey;
+      document.getElementById('exportMonth').value = monthKey;
+    }
+
+    window.showToast = function(message, type = "success") {
+      const toast = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMsg');
+      const icon = toast.querySelector('i');
+      
+      msgEl.textContent = message;
+      
+      if(type === 'error') {
+        toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-red-600 text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]";
+        icon.setAttribute('data-lucide', 'alert-triangle');
+      } else {
+        toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]";
+        icon.setAttribute('data-lucide', 'check-circle');
+      }
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-24', 'opacity-0');
+      }, 3000);
+    }
+
+    function escapeHTML(str) {
+      if (!str) return "";
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    window.switchTab = function(tabId, btnElement) {
+      currentTabId = tabId;
+      
+      // Update Buttons
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-emerald-600');
+        btn.classList.add('text-slate-400');
+      });
+      btnElement.classList.add('active', 'text-emerald-600');
+      btnElement.classList.remove('text-slate-400');
+
+      // Update Sections
+      document.querySelectorAll('.tab-content').forEach(section => {
+        section.classList.remove('block');
+        section.classList.add('hidden');
+      });
+      document.getElementById(`${tabId}-section`).classList.remove('hidden');
+      document.getElementById(`${tabId}-section`).classList.add('block');
+
+      if(tabId === 'write' && !editDocumentId) {
+        initCurrentTime();
+      }
+      
+      window.renderUI();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.handleFileSelect = function(event) {
+      const file = event.target.files[0];
+      const display = document.getElementById('fileNameDisplay');
+      if (file) {
+        display.textContent = file.name;
+        display.classList.add('text-emerald-600', 'font-medium');
+      } else {
+        display.textContent = "แตะเพื่อเลือกรูปภาพ";
+        display.classList.remove('text-emerald-600', 'font-medium');
+      }
+    }
+
+    window.submitLog = async function() {
+      if (!currentUserId) return;
+
+      const dateVal = document.getElementById('logDate').value;
+      const timeVal = document.getElementById('logTime').value;
+      const detailVal = document.getElementById('logDetail').value;
+      const fileInput = document.getElementById('logImage');
+      const btnSubmit = document.getElementById('btnSubmit');
+
+      if (!detailVal.trim()) {
+        showToast("กรุณาเขียนรายละเอียดก่อนบันทึก", "error");
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังบันทึก...`;
+      lucide.createIcons();
+
+      try {
+        const monthKey = dateVal.substring(0, 7); // YYYY-MM
+        const logData = {
+          date: dateVal,
+          time: timeVal,
+          monthKey: monthKey,
+          detail: detailVal,
+          timestamp: new Date().toISOString()
+        };
+
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const base64Img = await compressImage(file);
+          logData.imageUrl = base64Img;
+        }
+
+        if (editDocumentId) {
+          const docRef = doc(db, dbPath, editDocumentId);
+          await updateDoc(docRef, logData);
+          showToast("แก้ไขข้อมูลเรียบร้อย");
+          window.cancelEdit();
+        } else {
+          const colRef = collection(db, dbPath);
+          await addDoc(colRef, logData);
+          showToast("บันทึกข้อมูลเรียบร้อย");
+          
+          document.getElementById('readMonth').value = monthKey;
+          window.cancelEdit();
+          window.switchTab('read', document.querySelectorAll('.nav-btn')[1]);
+        }
+      } catch (error) {
+        console.error("Save Error:", error);
+        showToast("เกิดข้อผิดพลาดในการบันทึก", "error");
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = `<i data-lucide="save" class="w-5 h-5"></i><span>บันทึกข้อมูล</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // Image Compression logic
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800; // ลดขนาดเพื่อป้องกันเกิน 1MB limit ของ Firestore Document
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height && width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            } else if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            resolve(canvas.toDataURL('image/jpeg', 0.6));
+          };
+          img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+      });
+    }
+
+    function createLogCard(log, isExportMode = false) {
+      const dateObj = new Date(log.date);
+      const thDate = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+      
+      const safeDetail = escapeHTML(log.detail).replace(/\n/g, '<br>');
+      const imgHtml = log.imageUrl 
+        ? `<div class="mt-3 rounded-lg overflow-hidden border border-slate-100"><img src="${log.imageUrl}" alt="รูปประกอบ" class="w-full h-auto object-contain max-h-64 bg-slate-50"></div>` 
+        : '';
+      
+      // การ์ดสำหรับโหมด Export จะดูเป็นทางการและมีเส้นคั่นระหว่างรายการ
+      if (isExportMode) {
+        return `
+          <div class="log-card pt-2 pb-4 border-b border-slate-200 print:border-slate-300">
+            <div class="flex items-center text-sm font-medium text-slate-800 mb-1">
+              <span class="mr-2">${thDate}</span>
+              <span class="text-slate-500">เวลา ${log.time} น.</span>
+            </div>
+            <div class="text-[15px] leading-relaxed text-slate-800 break-words">${safeDetail}</div>
+            ${imgHtml}
+          </div>
+        `;
+      }
+
+      // การ์ดสำหรับโหมด Read จะมีปุ่มลบ/แก้
+      return `
+        <div class="log-card bg-white rounded-xl p-4 border border-slate-100 shadow-sm relative overflow-hidden group">
+          <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+          
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-dashed border-slate-100">
+            <div class="flex items-center text-xs font-semibold text-slate-500">
+              <span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md flex items-center mr-2">
+                <i data-lucide="calendar" class="w-3 h-3 mr-1"></i> ${thDate}
+              </span>
+              <span class="bg-slate-50 text-slate-600 px-2 py-1 rounded-md flex items-center">
+                <i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${log.time}
+              </span>
+            </div>
+            
+            <div class="flex gap-2">
+              <button onclick="editLog('${log.id}', '${log.date}', '${log.time}', \`${escapeHTML(log.detail).replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`)" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="แก้ไข">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+              </button>
+              <button onclick="openDeleteModal('${log.id}')" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="ลบ">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="text-[15px] leading-relaxed text-slate-700 break-words whitespace-pre-wrap">${escapeHTML(log.detail)}</div>
+          ${imgHtml}
+        </div>
+      `;
+    }
+
+    window.renderUI = function() {
+      if (currentTabId === 'read') {
+        const monthKey = document.getElementById('readMonth').value;
+        const filtered = allLogs.filter(log => log.monthKey === monthKey);
+        const container = document.getElementById('readContainer');
+        
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state bg-white rounded-xl border border-dashed border-slate-200">
+              <i data-lucide="folder-search" class="w-12 h-12 mb-2 text-slate-300"></i>
+              <p>ไม่มีข้อมูลบันทึกในเดือนนี้</p>
+            </div>`;
+        } else {
+          container.innerHTML = filtered.map(log => createLogCard(log, false)).join('');
+        }
+      } 
+      else if (currentTabId === 'export') {
+        const monthKey = document.getElementById('exportMonth').value;
+        const filtered = allLogs.filter(log => log.monthKey === monthKey);
+        const container = document.getElementById('exportContainer');
+        
+        const [year, month] = monthKey.split('-');
+        const thMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+        document.getElementById('printMonthText').textContent = `${thMonths[parseInt(month)-1]} พ.ศ. ${parseInt(year)+543}`;
+
+        if (filtered.length === 0) {
+          container.innerHTML = `<p class="text-center text-slate-400 py-10 text-sm">ไม่พบข้อมูลสำหรับจัดทำรายงาน</p>`;
+          document.getElementById('btnPrint').style.display = 'none';
+        } else {
+          container.innerHTML = filtered.map(log => createLogCard(log, true)).join('');
+          document.getElementById('btnPrint').style.display = 'flex';
+        }
+      }
+      
+      lucide.createIcons();
+    }
+
+    window.editLog = function(id, date, time, detail) {
+      editDocumentId = id;
+      document.getElementById('logDate').value = date;
+      document.getElementById('logTime').value = time;
+      document.getElementById('logDetail').value = detail;
+      
+      document.getElementById('btnSubmit').innerHTML = `<i data-lucide="save" class="w-5 h-5"></i><span>บันทึกการแก้ไข</span>`;
+      document.getElementById('btnCancel').classList.remove('hidden');
+      document.getElementById('btnCancel').classList.add('flex');
+      document.getElementById('editAlert').classList.remove('hidden');
+      
+      document.getElementById('logImage').value = '';
+      window.handleFileSelect({target: {files: []}});
+      
+      window.switchTab('write', document.querySelectorAll('.nav-btn')[0]);
+    }
+
+    window.cancelEdit = function() {
+      editDocumentId = null;
+      initCurrentTime();
+      document.getElementById('logDetail').value = '';
+      document.getElementById('logImage').value = '';
+      window.handleFileSelect({target: {files: []}});
+      
+      document.getElementById('btnSubmit').innerHTML = `<i data-lucide="save" class="w-5 h-5"></i><span>บันทึกข้อมูล</span>`;
+      document.getElementById('btnCancel').classList.add('hidden');
+      document.getElementById('btnCancel').classList.remove('flex');
+      document.getElementById('editAlert').classList.add('hidden');
+      lucide.createIcons();
+    }
+
+    let deleteTargetId = null;
+    window.openDeleteModal = function(id) {
+      deleteTargetId = id;
+      const modal = document.getElementById('confirmModal');
+      const box = document.getElementById('confirmModalBox');
+      
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        box.classList.remove('scale-95');
+      }, 10);
+    }
+
+    window.closeConfirmModal = function() {
+      deleteTargetId = null;
+      const modal = document.getElementById('confirmModal');
+      const box = document.getElementById('confirmModalBox');
+      
+      modal.classList.add('opacity-0');
+      box.classList.add('scale-95');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }, 300);
+    }
+
+    document.getElementById('btnConfirmAction').addEventListener('click', async () => {
+      if (!currentUserId || !deleteTargetId) return;
+      const btn = document.getElementById('btnConfirmAction');
+      const originalText = btn.textContent;
+      
+      try {
+        btn.textContent = 'กำลังลบ...';
+        btn.disabled = true;
+        
+        await deleteDoc(doc(db, dbPath, deleteTargetId));
+        showToast("ลบข้อมูลสำเร็จ");
+        window.closeConfirmModal();
+      } catch (error) {
+        console.error("Delete Error:", error);
+        showToast("ลบข้อมูลไม่สำเร็จ", "error");
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    });
+
+    function showLoadingModal(title, desc) {
+      document.getElementById('loadingTitle').innerText = title;
+      document.getElementById('loadingDesc').innerText = desc;
+      document.getElementById('loadingModal').classList.remove('hidden');
+      document.getElementById('loadingModal').classList.add('flex');
+    }
+
+    function hideLoadingModal() {
+      document.getElementById('loadingModal').classList.add('hidden');
+      document.getElementById('loadingModal').classList.remove('flex');
+    }
+
+    window.startGoogleSheetsImport = async function() {
+      if(!currentUserId) {
+         showToast("ระบบยังไม่พร้อม กรุณารอสักครู่", "error");
+         return;
+      }
+
+      const conf = confirm("ต้องการดึงข้อมูลเก่าจาก Google Sheets ลงระบบใหม่ใช่หรือไม่?\n(คำแนะนำ: ชีตเก่าต้องเปิดสิทธิ์เป็น 'ทุกคนที่มีลิงก์สามารถอ่านได้')");
+      if(!conf) return;
+
+      showLoadingModal('กำลังดึงข้อมูล', 'กำลังอ่านข้อมูลจาก Google Sheets...');
+      
+      try {
+        // ใช้ Google Visualization API ดึงข้อมูลเป็น JSON
+        const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json`;
+        const response = await fetch(url);
+        let textData = await response.text();
+        
+        // รูปแบบที่ได้มาจะเป็น: /*O_o*/ google.visualization.Query.setResponse({ ...json... });
+        // ต้องทำการตัด String ให้เหลือแค่ JSON
+        textData = textData.substring(textData.indexOf('{'), textData.lastIndexOf('}') + 1);
+        const jsonData = JSON.parse(textData);
+        
+        const rows = jsonData.table.rows;
+        if(!rows || rows.length === 0) {
+           hideLoadingModal();
+           showToast("ไม่พบข้อมูลใน Sheet หรือชีตถูกจำกัดสิทธิ์", "error");
+           return;
+        }
+
+        document.getElementById('loadingDesc').innerText = `พบข้อมูล ${rows.length} รายการ กำลังบันทึก...`;
+        
+        const colRef = collection(db, dbPath);
+        let importedCount = 0;
+
+        // วนลูปอ่านข้อมูล (สมมติฐาน โครงสร้างเดิม: A=Timestamp, B=Date, C=Time, D=Detail, E=Image, F=ID)
+        // หรือตามที่ Array จัดไว้: c[0] ถึง c[n]
+        for(let i = 0; i < rows.length; i++) {
+           const r = rows[i].c;
+           if(!r) continue;
+           
+           // พยายามดึงวันที่จากคอลัมน์ (ลองเดาว่า Date น่าจะอยู่คอลัมน์ 1)
+           // Format Date ที่ Google Viz คืนมา มักจะเป็น Date(YYYY, MM, DD) ถ้าเป็นชนิดวันที่
+           // หรือเป็น String ธรรมดา
+           let dateVal = "";
+           let timeVal = "";
+           let detailVal = "";
+           let imageVal = null;
+
+           // Helper ในการอ่านค่า
+           const getVal = (col) => (col && col.v) ? col.v.toString().trim() : "";
+
+           // พยายามแกะโครงสร้างจากโค้ดเดิมของคุณ
+           // row[1]=Date, row[2]=Time, row[3]=Detail, row[4]=Image
+           // ดังนั้นใน JS Viz API คอลัมน์ก็จะไล่จาก 0,1,2,3...
+           let rawDate = getVal(r[1]); 
+           if (rawDate.startsWith('Date(')) {
+              // Parse Date(2026, 9, 12) -> Month starts from 0 in JS
+              const parts = rawDate.replace('Date(', '').replace(')', '').split(',');
+              const d = new Date(parts[0], parts[1], parts[2]);
+              dateVal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+           } else if (rawDate.includes('/')) {
+              // สมมติมาเป็น DD/MM/YYYY
+              const [dd, mm, yyyy] = rawDate.split('/');
+              if(yyyy) dateVal = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+           } else if (rawDate.includes('-')) {
+              dateVal = rawDate.split('T')[0];
+           }
+           
+           // ถ้ายังไม่ได้วันที่ ให้ใช้วันปัจจุบัน
+           if(!dateVal) continue; // ข้ามแถวที่ไม่มีวันที่
+
+           // จัดการเวลา
+           let rawTime = getVal(r[2]);
+           if (Array.isArray(r[2]?.v)) { // กรณีเป็น time array [hh, mm, ss]
+              const tArr = r[2].v;
+              timeVal = `${String(tArr[0]).padStart(2, '0')}:${String(tArr[1]).padStart(2, '0')}`;
+           } else {
+              timeVal = rawTime.substring(0, 5); // เอาแค่ HH:mm
+           }
+
+           detailVal = getVal(r[3]);
+           
+           // ตรวจสอบรูปภาพ
+           if (r[4] && r[4].v) {
+              imageVal = r[4].v.toString();
+           }
+
+           // เตรียมข้อมูลส่ง Firebase
+           const monthKey = dateVal.substring(0, 7);
+           const logData = {
+              date: dateVal,
+              time: timeVal || '00:00',
+              monthKey: monthKey,
+              detail: detailVal,
+              timestamp: new Date().toISOString()
+           };
+
+           if(imageVal && imageVal.startsWith('data:image')) {
+              logData.imageUrl = imageVal; // ถ้าเป็น base64 เดิม
+           } else if (imageVal && imageVal.startsWith('http')) {
+              logData.imageUrl = imageVal; // ถ้าเป็น URL รูปภาพ
+           }
+
+           // ตรวจสอบว่ามีข้อมูลซ้ำไหม (เช็คจาก Memory)
+           const isExist = allLogs.find(l => l.date === dateVal && l.time === logData.time && l.detail === detailVal);
+           
+           if(!isExist && detailVal) {
+             await addDoc(colRef, logData);
+             importedCount++;
+           }
+        }
+        
+        hideLoadingModal();
+        if(importedCount > 0) {
+           showToast(`ดึงข้อมูลสำเร็จ ${importedCount} รายการ`);
+        } else {
+           showToast("ไม่มีข้อมูลใหม่ หรือดึงข้อมูลมาครบหมดแล้ว");
+        }
+
+      } catch (error) {
+        console.error("Import Error:", error);
+        hideLoadingModal();
+        showToast("นำเข้าล้มเหลว (ตรวจสอบสิทธิ์ Sheet)", "error");
+      }
+    }
+
+    // เริ่มระบบ
+    initSystem();
+
+  </script>
+</body>
+</html>
