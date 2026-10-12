@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -198,6 +199,7 @@
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
         
+        <!-- เปลี่ยนปุ่มกลับไปใช้คำสั่งที่รองรับทุกอุปกรณ์ -->
         <button id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
           <i data-lucide="printer" class="w-5 h-5"></i>
           <span>พิมพ์รายงาน A4 (PDF)</span>
@@ -209,7 +211,7 @@
         <h2 class="text-xl font-bold text-black">รายงานผลการปฏิบัติงานประจำเดือน <span id="printMonthText"></span></h2>
       </div>
 
-      <!-- คอนเทนเนอร์รายการตอนพิมพ์ (ถอด Flexbox สำหรับตอนพิมพ์ออก เพื่อป้องกันบั๊กการตัดหน้าใน Safari) -->
+      <!-- คอนเทนเนอร์รายการตอนพิมพ์ -->
       <div id="exportContainer" class="flex flex-col gap-2">
         <!-- Logs for export will be injected here -->
       </div>
@@ -249,7 +251,7 @@
     </div>
   </nav>
 
-  <!-- Toast Notification (แก้ไขบั๊กการแสดงผลแล้ว) -->
+  <!-- Toast Notification -->
   <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 text-white px-4 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 w-max max-w-[90%]">
     <!-- เนื้อหาจะถูกแทรกด้วย JavaScript -->
   </div>
@@ -298,7 +300,7 @@
     const db = getFirestore(app);
 
     let currentUserId = null;
-    let dbPath = 'daily_reports'; 
+    let dbPath = 'daily_reports'; // <--- แก้ไขจุดนี้: บันทึกลงโฟลเดอร์กลาง ไม่แยกตามผู้ใช้
     let allLogs = []; 
     let currentTabId = 'write';
     let editDocumentId = null;
@@ -313,8 +315,9 @@
         const userCred = await signInAnonymously(auth);
         currentUserId = userCred.user.uid;
         
-        // แยกข้อมูลรายบุคคล
-        dbPath = `users/${currentUserId}/daily_reports`;
+        // เราจะไม่เอา ID ของเครื่องมือถือมาสร้างเป็นโฟลเดอร์อีกต่อไป 
+        // เพื่อให้ทุกอุปกรณ์ที่เปิดเว็บนี้เห็นฐานข้อมูลก้อนเดียวกัน
+        dbPath = `daily_reports`; 
 
         setupRealtimeListener();
       } catch (error) {
@@ -361,26 +364,21 @@
       document.getElementById('exportMonth').value = monthKey;
     }
 
-    // ฟังก์ชัน Toast ที่แก้บั๊กการ render รูปภาพไอคอน
     window.showToast = function(message, type = "success") {
       const toast = document.getElementById('toast');
       const isError = (type === 'error');
       const bgClass = isError ? 'bg-red-600' : 'bg-slate-800';
       const iconName = isError ? 'alert-triangle' : 'check-circle';
       
-      // สร้างเนื้อหาใหม่ทั้งหมดทุกครั้ง
       toast.innerHTML = `
         <i data-lucide="${iconName}" class="w-5 h-5 shrink-0"></i>
         <span id="toastMsg">${escapeHTML(message)}</span>
       `;
       
-      // กำหนดคลาสใหม่
       toast.className = `fixed top-5 left-1/2 -translate-x-1/2 ${bgClass} text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 z-[100] flex items-center gap-2 transform translate-y-0 opacity-100 w-max max-w-[90%]`;
       
-      // ให้ Lucide วาดไอคอนใหม่
       lucide.createIcons();
 
-      // ซ่อนข้อความ
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('-translate-y-24', 'opacity-0');
@@ -864,7 +862,6 @@
       } catch (error) {
         console.error("Import Error Details:", error);
         hideLoadingModal();
-        // ข้อความจะถูกส่งไปแสดงที่ Toast และคราวนี้จะไม่พังแล้ว
         showToast(`ล้มเหลว: ${error.message}`, "error");
       }
     }
