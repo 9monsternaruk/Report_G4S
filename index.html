@@ -226,7 +226,7 @@
           <input type="month" id="readMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="renderUI()">
           <button type="button" id="btnReadSort" onclick="toggleSortOrder('read')" class="shrink-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่">
             <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
-            <span id="readSortLabel">วันที่ 1 → 31</span>
+            <span id="readSortLabel">ล่าสุด → วันแรก</span>
           </button>
         </div>
       </div>
@@ -380,7 +380,7 @@
     let isImageRemoved = false;
 
     // ทิศทางการเรียงลำดับ: 'asc' = วันที่ 1 -> 31 (เก่าไปใหม่), 'desc' = ล่าสุดขึ้นก่อน (31 -> 1)
-    let readSortOrder = 'asc';
+    let readSortOrder = 'desc';
     let exportSortOrder = 'asc';
 
     const GOOGLE_SHEET_ID = "1-1F8YpcJvM7GGHRmpejjpptG7ht8G6PedYAxQ3_jwJU";
