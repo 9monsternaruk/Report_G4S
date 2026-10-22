@@ -7,7 +7,7 @@
   
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
 
   <style>
     :root {
@@ -49,7 +49,7 @@
         margin: 0 !important;
         height: auto !important;
         overflow: visible !important;
-        -webkit-print-color-adjust: exact; /* บังคับแสดงสีสำหรับ iOS */
+        -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
       
@@ -60,7 +60,7 @@
       }
 
       /* ซ่อนส่วนที่ไม่จำเป็นตอนพิมพ์ */
-      .no-print, nav, #header-bar, .toast, .modal, #loadingModal, #write-section, #read-section { 
+      .no-print, nav, #header-bar, .toast, .modal, #loadingModal, #importModal, #write-section, #read-section { 
         display: none !important; 
       }
       
@@ -77,7 +77,7 @@
         break-inside: avoid !important;
         -webkit-column-break-inside: avoid;
         border: none !important; 
-        border-bottom: 1px solid #cbd5e1 !important; /* ใช้เส้นใต้คั่นแต่ละรายการแทนกล่อง */
+        border-bottom: 1px solid #cbd5e1 !important;
         box-shadow: none !important;
         margin-bottom: 20px !important;
         padding-bottom: 15px !important;
@@ -88,7 +88,7 @@
         display: block !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        max-height: 250px !important; /* คุมขนาดรูปไม่ให้ใหญ่จนล้นกระดาษ */
+        max-height: 250px !important;
         object-fit: contain !important;
         margin-top: 10px !important;
       }
@@ -106,7 +106,7 @@
         width: 100% !important;
         margin-top: 40px !important;
         padding: 0 !important;
-        page-break-inside: avoid !important; /* ป้องกันโดนตัดหน้ากลางลายเซ็น */
+        page-break-inside: avoid !important;
         break-inside: avoid !important;
         text-align: center !important;
       }
@@ -193,7 +193,13 @@
     <section id="read-section" class="tab-content hidden">
       <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 mb-4 sticky top-[60px] z-30">
         <label class="block text-xs font-medium text-slate-500 mb-1 text-center">แฟ้มบันทึกเดือน</label>
-        <input type="month" id="readMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="renderUI()">
+        <div class="flex gap-2 items-center">
+          <input type="month" id="readMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="renderUI()">
+          <button type="button" id="btnReadSort" onclick="toggleSortOrder('read')" class="shrink-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่">
+            <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
+            <span id="readSortLabel">วันที่ 1 → 31</span>
+          </button>
+        </div>
       </div>
       
       <div id="readContainer" class="flex flex-col gap-3">
@@ -203,7 +209,7 @@
       <!-- ส่วนนำเข้าข้อมูลจาก Google Sheets -->
       <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center justify-center no-print pb-8">
         <p class="text-xs text-slate-500 mb-3 text-center">ย้ายข้อมูลจากระบบเดิม (Google Sheets) <br>ID: 1-1F8YpcJvM... </p>
-        <button type="button" onclick="startGoogleSheetsImport()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-indigo-100">
+        <button type="button" onclick="openImportModal()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-indigo-100">
           <i data-lucide="download-cloud" class="w-4 h-4"></i> ดึงข้อมูลเก่าลง Firebase
         </button>
       </div>
@@ -213,7 +219,13 @@
     <section id="export-section" class="tab-content hidden">
       <div class="no-print bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
-        <input type="month" id="exportMonth" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium mb-4 focus:outline-none" onchange="renderUI()">
+        <div class="flex gap-2 items-center mb-4">
+          <input type="month" id="exportMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium focus:outline-none" onchange="renderUI()">
+          <button type="button" id="btnExportSort" onclick="toggleSortOrder('export')" class="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg px-3 py-3 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่ตอนพิมพ์">
+            <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
+            <span id="exportSortLabel">วันที่ 1 → 31</span>
+          </button>
+        </div>
         
         <button type="button" id="btnPrint" onclick="window.print()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl shadow-sm shadow-blue-500/30 transition flex items-center justify-center gap-2" style="display: none;">
           <i data-lucide="printer" class="w-5 h-5"></i>
@@ -231,7 +243,7 @@
         <!-- Logs for export will be injected here -->
       </div>
       
-      <!-- ส่วนท้ายลายเซ็น (แสดงเฉพาะตอน Print) ปรับโครงสร้างใหม่ให้เป็น Inline-Block -->
+      <!-- ส่วนท้ายลายเซ็น (แสดงเฉพาะตอน Print) -->
       <div class="hidden print-footer mt-12 pt-8">
         <div class="print-footer-box">
           <p class="mb-8">ลงชื่อ................................................ผู้รายงาน</p>
@@ -286,6 +298,22 @@
     </div>
   </div>
 
+  <!-- Import Google Sheets Modal -->
+  <div id="importModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[105] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+      <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 mx-auto">
+        <i data-lucide="download-cloud" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-lg font-bold text-center text-slate-800 mb-1">ดึงข้อมูลจาก Google Sheets</h3>
+      <p class="text-xs text-slate-500 text-center mb-4">กรอกชื่อแท็บ (Sheet Name) ที่ต้องการดึงข้อมูล เช่น <span class="font-semibold text-slate-700">10_2026</span> หรือเว้นว่างเพื่อดึงแท็บแรก</p>
+      <input type="text" id="importSheetName" placeholder="เช่น 10_2026, 09_2026" class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3.5 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+      <div class="flex gap-3">
+        <button type="button" onclick="closeImportModal()" class="flex-1 py-2.5 rounded-xl font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition text-sm">ยกเลิก</button>
+        <button type="button" onclick="startGoogleSheetsImport()" class="flex-1 py-2.5 rounded-xl font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition text-sm">เริ่มดึงข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Loading Modal -->
   <div id="loadingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-2xl max-w-xs w-full">
@@ -320,7 +348,112 @@
     let currentTabId = 'write';
     let editDocumentId = null;
 
+    // ทิศทางการเรียงลำดับ: 'asc' = วันที่ 1 -> 31 (เก่าไปใหม่), 'desc' = ล่าสุดขึ้นก่อน (31 -> 1)
+    let readSortOrder = 'asc';
+    let exportSortOrder = 'asc';
+
     const GOOGLE_SHEET_ID = "1-1F8YpcJvM7GGHRmpejjpptG7ht8G6PedYAxQ3_jwJU";
+
+    /**
+     * แปลงวันที่ทุกรูปแบบให้เป็นมาตรฐาน YYYY-MM-DD (ค.ศ.) เสมอ
+     * ป้องกันปัญหา Invalid Date (NaN) เวลาเรียงลำดับข้ามเดือนหรือข้อมูลจาก Google Sheets
+     */
+    function normalizeDateStr(raw) {
+      if (!raw) return "";
+      const str = String(raw).trim();
+
+      // กรณี Date(2026,9,13) จาก Google Visualization API (เดือนใน JS เริ่มที่ 0)
+      if (str.startsWith('Date(')) {
+        const parts = str.replace('Date(', '').replace(')', '').split(',');
+        if (parts.length >= 3) {
+          let y = parseInt(parts[0], 10);
+          let m = parseInt(parts[1], 10) + 1;
+          let d = parseInt(parts[2], 10);
+          if (y > 2400) y -= 543;
+          if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          }
+        }
+      }
+
+      // กรณี YYYY-M-D หรือ YYYY/M/D
+      const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      if (ymdMatch) {
+        let y = parseInt(ymdMatch[1], 10);
+        let m = parseInt(ymdMatch[2], 10);
+        let d = parseInt(ymdMatch[3], 10);
+        if (y > 2400) y -= 543;
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+
+      // กรณี D/M/YYYY หรือ D-M-YYYY (รวมปี 2 หลัก และ พ.ศ.)
+      const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
+      if (dmyMatch) {
+        let d = parseInt(dmyMatch[1], 10);
+        let m = parseInt(dmyMatch[2], 10);
+        let y = parseInt(dmyMatch[3], 10);
+        if (y < 100) y += 2000;
+        if (y > 2400) y -= 543;
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+
+      return str;
+    }
+
+    /**
+     * แปลงเวลาทุกรูปแบบ (เช่น "6:03", "6:03:00", "6:03:", "18.04", Date(...)) ให้เป็น HH:MM เสมอ
+     */
+    function normalizeTimeStr(raw) {
+      if (!raw) return "00:00";
+      if (Array.isArray(raw) && raw.length >= 2) {
+        return `${String(parseInt(raw[0], 10) || 0).padStart(2, '0')}:${String(parseInt(raw[1], 10) || 0).padStart(2, '0')}`;
+      }
+      const str = String(raw).trim();
+      if (str.startsWith('Date(')) {
+        const parts = str.replace('Date(', '').replace(')', '').split(',');
+        if (parts.length >= 5) {
+          const hh = parseInt(parts[3], 10) || 0;
+          const mm = parseInt(parts[4], 10) || 0;
+          return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+        }
+      }
+      const tmMatch = str.match(/(\d{1,2})[:.](\d{1,2})/);
+      if (tmMatch) {
+        const hh = Math.min(23, Math.max(0, parseInt(tmMatch[1], 10) || 0));
+        const mm = Math.min(59, Math.max(0, parseInt(tmMatch[2], 10) || 0));
+        return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+      }
+      return "00:00";
+    }
+
+    /**
+     * สร้างคีย์สำหรับการเรียงลำดับที่ไม่มีวันเกิดค่า NaN
+     */
+    function getSortKey(log) {
+      const d = normalizeDateStr(log.date) || "0000-00-00";
+      const t = normalizeTimeStr(log.time) || "00:00";
+      return `${d}T${t}`;
+    }
+
+    /**
+     * เรียงลำดับรายการบันทึกตามทิศทางที่กำหนด ('asc' หรือ 'desc')
+     */
+    function sortLogsList(list, order = 'asc') {
+      return [...list].sort((a, b) => {
+        const keyA = getSortKey(a);
+        const keyB = getSortKey(b);
+        if (keyA !== keyB) {
+          return order === 'asc'
+            ? keyA.localeCompare(keyB)
+            : keyB.localeCompare(keyA);
+        }
+        const tsA = String(a.timestamp || "");
+        const tsB = String(b.timestamp || "");
+        return order === 'asc'
+          ? tsA.localeCompare(tsB)
+          : tsB.localeCompare(tsA);
+      });
+    }
 
     lucide.createIcons();
     initCurrentTime();
@@ -341,18 +474,39 @@
       
       const colRef = collection(db, dbPath);
       onSnapshot(colRef, (snapshot) => {
-        allLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        allLogs.sort((a, b) => {
-          const dtA = new Date(`${a.date}T${a.time || '00:00'}`);
-          const dtB = new Date(`${b.date}T${b.time || '00:00'}`);
-          return dtB - dtA;
+        // Normalize ข้อมูลทุกแถวทันทีที่โหลดจาก Firebase เพื่อให้ข้อมูลเก่าเรียงวันที่ได้ถูกต้องทันที
+        allLogs = snapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          const normDate = normalizeDateStr(data.date);
+          const normTime = normalizeTimeStr(data.time);
+          const normMonthKey = normDate.length >= 7 ? normDate.substring(0, 7) : (data.monthKey || "");
+          return {
+            id: docSnap.id,
+            ...data,
+            date: normDate || data.date || "",
+            time: normTime,
+            monthKey: normMonthKey
+          };
         });
-
+        
+        allLogs = sortLogsList(allLogs, readSortOrder);
         window.renderUI();
       }, (error) => {
         console.error("Realtime Error:", error);
       });
+    }
+
+    window.toggleSortOrder = function(section) {
+      if (section === 'read') {
+        readSortOrder = (readSortOrder === 'asc') ? 'desc' : 'asc';
+        const lbl = document.getElementById('readSortLabel');
+        if (lbl) lbl.textContent = (readSortOrder === 'asc') ? 'วันที่ 1 → 31' : 'ล่าสุด → วันแรก';
+      } else if (section === 'export') {
+        exportSortOrder = (exportSortOrder === 'asc') ? 'desc' : 'asc';
+        const lbl = document.getElementById('exportSortLabel');
+        if (lbl) lbl.textContent = (exportSortOrder === 'asc') ? 'วันที่ 1 → 31' : 'ล่าสุด → วันแรก';
+      }
+      window.renderUI();
     }
 
     function initCurrentTime() {
@@ -441,11 +595,16 @@
     window.submitLog = async function() {
       if (!currentUserId) return;
 
-      const dateVal = document.getElementById('logDate').value;
-      const timeVal = document.getElementById('logTime').value;
+      const dateVal = normalizeDateStr(document.getElementById('logDate').value);
+      const timeVal = normalizeTimeStr(document.getElementById('logTime').value);
       const detailVal = document.getElementById('logDetail').value;
       const fileInput = document.getElementById('logImage');
       const btnSubmit = document.getElementById('btnSubmit');
+
+      if (!dateVal) {
+        showToast("กรุณาเลือกวันที่ก่อนบันทึก", "error");
+        return;
+      }
 
       if (!detailVal.trim()) {
         showToast("กรุณาเขียนรายละเอียดก่อนบันทึก", "error");
@@ -531,9 +690,24 @@
       });
     }
 
+    function formatThaiDateDisplay(dateStr) {
+      const norm = normalizeDateStr(dateStr);
+      const parts = norm.split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const dateObj = new Date(y, m, d);
+        if (!isNaN(dateObj.getTime())) {
+          return dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+      }
+      return dateStr || "-";
+    }
+
     function createLogCard(log, isExportMode = false) {
-      const dateObj = new Date(log.date);
-      const thDate = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+      const thDate = formatThaiDateDisplay(log.date);
+      const timeDisplay = normalizeTimeStr(log.time);
       
       const safeDetail = escapeHTML(log.detail).replace(/\n/g, '<br>');
       const imgHtml = log.imageUrl 
@@ -541,12 +715,11 @@
         : '';
       
       if (isExportMode) {
-        // แก้ไข: ถอดคลาส flex ออกตอนปริ้นท์ และเพิ่ม whitespace-pre-wrap ให้อ่านง่ายขึ้น
         return `
           <div class="log-card pt-2 pb-4">
             <div class="block text-sm font-medium text-slate-800 mb-2">
               <span class="mr-2">${thDate}</span>
-              <span class="text-slate-500">เวลา ${log.time} น.</span>
+              <span class="text-slate-500">เวลา ${timeDisplay} น.</span>
             </div>
             <div class="text-[15px] leading-relaxed text-slate-800 break-words whitespace-pre-wrap">${safeDetail}</div>
             ${imgHtml}
@@ -564,12 +737,12 @@
                 <i data-lucide="calendar" class="w-3 h-3 mr-1"></i> ${thDate}
               </span>
               <span class="bg-slate-50 text-slate-600 px-2 py-1 rounded-md flex items-center">
-                <i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${log.time}
+                <i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${timeDisplay}
               </span>
             </div>
             
             <div class="flex gap-2">
-              <button type="button" onclick="editLog('${log.id}', '${log.date}', '${log.time}', \`${escapeHTML(log.detail).replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`)" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="แก้ไข">
+              <button type="button" onclick="editLog('${log.id}', '${log.date}', '${timeDisplay}', \`${escapeHTML(log.detail).replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`)" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="แก้ไข">
                 <i data-lucide="edit-3" class="w-4 h-4"></i>
               </button>
               <button type="button" onclick="openDeleteModal('${log.id}')" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="ลบ">
@@ -587,7 +760,10 @@
     window.renderUI = function() {
       if (currentTabId === 'read') {
         const monthKey = document.getElementById('readMonth').value;
-        const filtered = allLogs.filter(log => log.monthKey === monthKey);
+        const filtered = sortLogsList(
+          allLogs.filter(log => log.monthKey === monthKey),
+          readSortOrder
+        );
         const container = document.getElementById('readContainer');
         
         if (filtered.length === 0) {
@@ -602,13 +778,16 @@
       } 
       else if (currentTabId === 'export') {
         const monthKey = document.getElementById('exportMonth').value;
-        const filtered = allLogs.filter(log => log.monthKey === monthKey);
+        const filtered = sortLogsList(
+          allLogs.filter(log => log.monthKey === monthKey),
+          exportSortOrder
+        );
         const container = document.getElementById('exportContainer');
         const btnPrint = document.getElementById('btnPrint');
         
         const [year, month] = monthKey.split('-');
         const thMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-        document.getElementById('printMonthText').textContent = `${thMonths[parseInt(month)-1]} พ.ศ. ${parseInt(year)+543}`;
+        document.getElementById('printMonthText').textContent = `${thMonths[parseInt(month, 10)-1]} พ.ศ. ${parseInt(year, 10)+543}`;
 
         if (filtered.length === 0) {
           container.innerHTML = `<p class="text-center text-slate-400 py-10 text-sm">ไม่พบข้อมูลสำหรับจัดทำรายงาน</p>`;
@@ -624,8 +803,8 @@
 
     window.editLog = function(id, date, time, detail) {
       editDocumentId = id;
-      document.getElementById('logDate').value = date;
-      document.getElementById('logTime').value = time;
+      document.getElementById('logDate').value = normalizeDateStr(date);
+      document.getElementById('logTime').value = normalizeTimeStr(time);
       document.getElementById('logDetail').value = detail;
       
       document.getElementById('btnSubmit').innerHTML = `<i data-lucide="save" class="w-5 h-5"></i><span>บันทึกการแก้ไข</span>`;
@@ -702,6 +881,24 @@
       }
     });
 
+    window.openImportModal = function() {
+      const readMonthVal = document.getElementById('readMonth').value;
+      const input = document.getElementById('importSheetName');
+      if (readMonthVal && !input.value) {
+        const [y, m] = readMonthVal.split('-');
+        input.value = `${m}_${y}`;
+      }
+      const modal = document.getElementById('importModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    window.closeImportModal = function() {
+      const modal = document.getElementById('importModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
     window.showLoadingModal = function(title, desc) {
       document.getElementById('loadingTitle').innerText = title;
       document.getElementById('loadingDesc').innerText = desc;
@@ -720,9 +917,8 @@
          return;
       }
 
-      const targetSheet = prompt("ต้องการดึงข้อมูลเก่าจาก Google Sheets ใช่หรือไม่?\n\nกรุณาพิมพ์ชื่อแท็บ(Sheet Name) ที่ต้องการดึงข้อมูลให้ถูกต้อง (เช่น 10_2026)\n*สำคัญมาก: ไฟล์ Sheet ต้องแชร์สิทธิ์เป็น 'ทุกคนที่มีลิงก์ (ผู้มีสิทธิ์อ่าน)'", "");
-      
-      if(targetSheet === null) return; 
+      const targetSheet = document.getElementById('importSheetName').value || "";
+      window.closeImportModal();
 
       showLoadingModal('กำลังดึงข้อมูล', 'กำลังเชื่อมต่อ Google Sheets...');
       
@@ -785,48 +981,22 @@
            const getFormattedVal = (colIndex) => {
                if (r.length <= colIndex || !r[colIndex] || !r[colIndex].f) return getVal(colIndex);
                return r[colIndex].f.toString().trim();
-           }
+           };
 
            let rawDate = getVal(1); 
            let formattedDate = getFormattedVal(1);
-           let dateVal = "";
-
-           if (rawDate.startsWith('Date(')) {
-              const parts = rawDate.replace('Date(', '').replace(')', '').split(',');
-              if (parts.length >= 3) {
-                  const d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
-                  if (!isNaN(d.getTime())) {
-                      dateVal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                  }
-              }
-           } else if (formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {               dateVal = formattedDate;             } else if (rawDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-              dateVal = rawDate;
-           } else if (formattedDate.includes('/')) {
-              const parts = formattedDate.split('/');
-              if (parts.length === 3) {
-                  let dd = parts[0], mm = parts[1], yyyy = parts[2];
-                  if (yyyy.length === 2) yyyy = "20" + yyyy; 
-                  dateVal = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
-              }
-           }
+           let dateVal = normalizeDateStr(rawDate) || normalizeDateStr(formattedDate);
            
-           if(!dateVal) {
+           if(!dateVal || !/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
                skippedCount++;
                continue; 
            }
 
-           let rawTime = getVal(2);
+           let rawTime = r[2]?.v;
            let formattedTime = getFormattedVal(2);
-           let timeVal = "00:00";
-
-           if (Array.isArray(r[2]?.v)) { 
-              const tArr = r[2].v;
-              timeVal = `${String(tArr[0]).padStart(2, '0')}:${String(tArr[1]).padStart(2, '0')}`;
-           } else if (formattedTime.match(/^\d{1,2}:\d{2}/)) {
-              timeVal = formattedTime.substring(0, 5).padStart(5, '0');
-           } else if (rawTime.match(/^\d{1,2}:\d{2}/)) {
-              timeVal = rawTime.substring(0, 5).padStart(5, '0');
-           }
+           let timeVal = normalizeTimeStr(rawTime) !== "00:00"
+             ? normalizeTimeStr(rawTime)
+             : normalizeTimeStr(formattedTime);
 
            let detailVal = getVal(3);
            let imageVal = getVal(4);
