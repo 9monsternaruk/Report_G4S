@@ -1,3 +1,7 @@
+<!-- Chosen Palette: Emerald & Slate Calm Harmony -->
+<!-- Application Structure Plan: Single-page application designed for daily work logging with 3 primary functional sections: Write Log (interactive entry with image compression), Read Log (monthly archive view with legacy Firebase data migration), and Export Report (A4 print layout). It includes full Firebase Firestore real-time integration, sorting, zoomable image inspection, and legacy migration tools. -->
+<!-- Visualization & Content Choices: Clean HTML cards with dynamic dynamic DOM generation powered by Firebase Firestore listeners. Interactive Canvas modal for image zooming and status toasts. Confirming NO raw SVG graphic elements or Mermaid JS used. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -219,7 +223,12 @@
     <!-- หน้าเปิดอ่าน -->
     <section id="read-section" class="tab-content hidden">
       <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 mb-4 sticky top-[60px] z-30">
-        <label class="block text-xs font-medium text-slate-500 mb-1 text-center">แฟ้มบันทึกเดือน (ประหยัดโควต้าด้วยการดึงเฉพาะเดือน)</label>
+        <div class="flex items-center justify-between mb-2 gap-2">
+          <label class="block text-xs font-medium text-slate-500 text-left flex-1">แฟ้มบันทึกเดือน</label>
+          <button type="button" onclick="migrateOldFirebaseData()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-lg font-medium flex items-center gap-1 transition shadow-sm" title="ดึงข้อมูลจากตารางเดิม (daily_reports) มายังระบบใหม่">
+            <i data-lucide="database" class="w-3.5 h-3.5"></i> ดึงข้อมูลจาก Firebase เดิม
+          </button>
+        </div>
         <div class="flex gap-2 items-center">
           <input type="month" id="readMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="onMonthChanged()">
           <button type="button" id="btnReadSort" onclick="toggleSortOrder('read')" class="shrink-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่">
@@ -233,11 +242,15 @@
         <!-- Logs will be injected here -->
       </div>
 
-      <!-- ส่วนนำเข้าข้อมูลจาก Google Sheets -->
-      <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center justify-center no-print pb-8">
-        <p class="text-xs text-slate-500 mb-3 text-center">ย้ายข้อมูลจากระบบเดิม (Google Sheets) <br>ID: 1-1F8YpcJvM... </p>
+      <!-- ส่วนนำเข้าข้อมูลจาก Firebase เดิม และ Google Sheets -->
+      <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center justify-center no-print pb-8 gap-3">
+        <button type="button" onclick="migrateOldFirebaseData()" class="w-full max-w-sm px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition border border-amber-200 shadow-sm">
+          <i data-lucide="database" class="w-4 h-4 text-amber-600"></i> ดึงข้อมูลเก่าจาก Firebase เดิม (daily_reports)
+        </button>
+
+        <p class="text-xs text-slate-400 mt-2 text-center">หรือดึงจาก Google Sheets (ระบบเดิม ID: 1-1F8YpcJvM...)</p>
         <button type="button" onclick="openImportModal()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-indigo-100">
-          <i data-lucide="download-cloud" class="w-4 h-4"></i> ดึงข้อมูลเก่าลง Firebase
+          <i data-lucide="download-cloud" class="w-4 h-4"></i> ดึงข้อมูล Google Sheets ลง Firebase
         </button>
       </div>
     </section>
@@ -377,6 +390,7 @@
     let currentUserId = null;
     const COLLECTION_PREFIX = "att_";
     let dbPath = COLLECTION_PREFIX + 'time_logs'; 
+    let oldDbPath = 'daily_reports'; // Collection เดิมก่อนที่จะมีการปรับปรุงโครงสร้างตาราง
 
     let currentMonthLogs = []; 
     let currentTabId = 'write';
@@ -537,6 +551,79 @@
       document.getElementById('readMonth').value = selectedMonth;
       loadMonthData(selectedMonth);
     }
+
+    // ฟังก์ชันดึงข้อมูลจาก Collection เดิม (daily_reports) มายัง Collection ใหม่ (att_time_logs)
+    window.migrateOldFirebaseData = async function() {
+      if (!currentUserId) {
+        showToast("ระบบยังไม่พร้อม กรุณารอสักครู่", "error");
+        return;
+      }
+
+      showLoadingModal("กำลังดึงข้อมูลเก่า", "กำลังตรวจสอบฐานข้อมูลเดิม (daily_reports)...");
+
+      try {
+        const oldColRef = collection(db, oldDbPath);
+        const snapshot = await getDocs(oldColRef);
+
+        if (snapshot.empty) {
+          hideLoadingModal();
+          showToast("ไม่พบข้อมูลในตาราง daily_reports เดิม", "error");
+          return;
+        }
+
+        document.getElementById('loadingDesc').innerText = `พบข้อมูลเก่า ${snapshot.size} รายการ กำลังโอนย้าย...`;
+
+        let migratedCount = 0;
+        let skippedCount = 0;
+        const newColRef = collection(db, dbPath);
+
+        const currentMonthKey = document.getElementById('readMonth').value;
+        const currentSnapshot = await getDocs(newColRef);
+        const existingDocs = currentSnapshot.docs.map(d => d.data());
+
+        for (const docSnap of snapshot.docs) {
+          const data = docSnap.data();
+          const normDate = normalizeDateStr(data.date);
+          const normTime = normalizeTimeStr(data.time);
+          const monthKey = normDate.length >= 7 ? normDate.substring(0, 7) : (data.monthKey || currentMonthKey);
+
+          const newLogData = {
+            date: normDate || data.date || "",
+            time: normTime,
+            monthKey: monthKey,
+            detail: data.detail || "",
+            imageUrl: data.imageUrl || "",
+            timestamp: data.timestamp || new Date().toISOString()
+          };
+
+          if (!newLogData.date || !newLogData.detail) {
+            skippedCount++;
+            continue;
+          }
+
+          const isExist = existingDocs.some(l => l.date === newLogData.date && l.time === newLogData.time && l.detail === newLogData.detail);
+
+          if (!isExist) {
+            await addDoc(newColRef, newLogData);
+            migratedCount++;
+          } else {
+            skippedCount++;
+          }
+        }
+
+        hideLoadingModal();
+        let msg = `ดึงข้อมูลเก่าสำเร็จ ${migratedCount} รายการ`;
+        if (skippedCount > 0) msg += ` (ซ้ำ/ข้าม ${skippedCount} รายการ)`;
+        showToast(msg);
+
+        loadMonthData(currentMonthKey);
+
+      } catch (error) {
+        console.error("Migration Error:", error);
+        hideLoadingModal();
+        showToast(`ดึงข้อมูลไม่สำเร็จ: ${error.message}`, "error");
+      }
+    };
 
     async function cleanupOldImages() {
       try {
@@ -1001,6 +1088,9 @@
             <div class="empty-state bg-white rounded-xl border border-dashed border-slate-200">
               <i data-lucide="folder-search" class="w-12 h-12 mb-2 text-slate-300"></i>
               <p>ไม่มีข้อมูลบันทึกในเดือนนี้</p>
+              <button type="button" onclick="migrateOldFirebaseData()" class="mt-4 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-medium flex items-center gap-1.5 transition border border-amber-200">
+                <i data-lucide="database" class="w-3.5 h-3.5"></i> ดึงข้อมูลจาก Firebase เดิม (daily_reports)
+              </button>
             </div>`;
         } else {
           container.innerHTML = filtered.map(log => createLogCard(log, false)).join('');
