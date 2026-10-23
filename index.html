@@ -1,7 +1,3 @@
-<!-- Chosen Palette: Emerald & Slate Calm Harmony -->
-<!-- Application Structure Plan: Single-page application designed for daily work logging with 3 primary functional sections: Write Log (interactive entry with image compression), Read Log (monthly archive view with legacy Firebase data migration), and Export Report (A4 print layout). It includes full Firebase Firestore real-time integration, sorting, zoomable image inspection, and legacy migration tools. -->
-<!-- Visualization & Content Choices: Clean HTML cards with dynamic dynamic DOM generation powered by Firebase Firestore listeners. Interactive Canvas modal for image zooming and status toasts. Confirming NO raw SVG graphic elements or Mermaid JS used. -->
-<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -137,7 +133,7 @@
         <h1 class="text-lg font-semibold text-slate-800">สมุดบันทึกรายงาน</h1>
       </div>
       <div class="flex items-center gap-2">
-        <span id="activeMonthBadge" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-lg font-medium">กำลังโหลด...</span>
+        <span id="activeMonthBadge" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg font-medium">กำลังโหลด...</span>
       </div>
     </div>
   </header>
@@ -222,46 +218,55 @@
 
     <!-- หน้าเปิดอ่าน -->
     <section id="read-section" class="tab-content hidden">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 mb-4 sticky top-[60px] z-30">
-        <div class="flex items-center justify-between mb-2 gap-2">
-          <label class="block text-xs font-medium text-slate-500 text-left flex-1">แฟ้มบันทึกเดือน</label>
-          <button type="button" onclick="migrateOldFirebaseData()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-lg font-medium flex items-center gap-1 transition shadow-sm" title="ดึงข้อมูลจากตารางเดิม (daily_reports) มายังระบบใหม่">
-            <i data-lucide="database" class="w-3.5 h-3.5"></i> ดึงข้อมูลจาก Firebase เดิม
+      
+      <!-- ส่วนเลือกเดือน & ปุ่มดึงข้อมูล Firebase เดิม -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4 sticky top-[60px] z-30">
+        <div class="flex items-center justify-between mb-3 gap-2">
+          <label class="block text-xs font-semibold text-slate-600 text-left">แฟ้มบันทึกเดือน</label>
+          <button type="button" onclick="migrateOldFirebaseData()" class="text-xs bg-amber-500 hover:bg-amber-600 text-white font-medium px-3 py-1.5 rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0" title="ดึงข้อมูลจากตารางเดิม (daily_reports) มายังระบบใหม่">
+            <i data-lucide="database" class="w-3.5 h-3.5"></i>
+            <span>ดึงข้อมูลจาก Firebase เดิม</span>
           </button>
         </div>
         <div class="flex gap-2 items-center">
-          <input type="month" id="readMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="onMonthChanged()">
-          <button type="button" id="btnReadSort" onclick="toggleSortOrder('read')" class="shrink-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่">
+          <input type="month" id="readMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-xl px-3 py-2.5 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition" onchange="onMonthChanged()">
+          <button type="button" id="btnReadSort" onclick="toggleSortOrder('read')" class="shrink-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl px-3.5 py-2.5 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่">
             <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
             <span id="readSortLabel">ล่าสุด → วันแรก</span>
           </button>
         </div>
       </div>
       
+      <!-- รายการบันทึก -->
       <div id="readContainer" class="flex flex-col gap-3">
         <!-- Logs will be injected here -->
       </div>
 
-      <!-- ส่วนนำเข้าข้อมูลจาก Firebase เดิม และ Google Sheets -->
+      <!-- ส่วนปุ่มเครื่องมือด้านล่าง -->
       <div class="mt-8 pt-6 border-t border-slate-200 flex flex-col items-center justify-center no-print pb-8 gap-3">
-        <button type="button" onclick="migrateOldFirebaseData()" class="w-full max-w-sm px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition border border-amber-200 shadow-sm">
-          <i data-lucide="database" class="w-4 h-4 text-amber-600"></i> ดึงข้อมูลเก่าจาก Firebase เดิม (daily_reports)
+        <div class="text-center mb-1">
+          <p class="text-xs font-medium text-slate-500">ย้าย/เชื่อมโยงข้อมูลจากระบบเดิม</p>
+        </div>
+        
+        <button type="button" onclick="migrateOldFirebaseData()" class="w-full max-w-sm px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition shadow-sm">
+          <i data-lucide="database" class="w-4.5 h-4.5"></i>
+          <span>ดึงข้อมูลจาก Firebase เดิม (ตาราง daily_reports)</span>
         </button>
 
-        <p class="text-xs text-slate-400 mt-2 text-center">หรือดึงจาก Google Sheets (ระบบเดิม ID: 1-1F8YpcJvM...)</p>
-        <button type="button" onclick="openImportModal()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-indigo-100">
-          <i data-lucide="download-cloud" class="w-4 h-4"></i> ดึงข้อมูล Google Sheets ลง Firebase
+        <button type="button" onclick="openImportModal()" class="w-full max-w-sm px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition border border-indigo-200 shadow-sm mt-1">
+          <i data-lucide="download-cloud" class="w-4 h-4 text-indigo-600"></i>
+          <span>ดึงข้อมูล Google Sheets ลง Firebase</span>
         </button>
       </div>
     </section>
 
     <!-- หน้าออกรายงาน -->
     <section id="export-section" class="tab-content hidden">
-      <div class="no-print bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
+      <div class="no-print bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <div class="flex gap-2 items-center mb-4">
-          <input type="month" id="exportMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium focus:outline-none" onchange="onExportMonthChanged()">
-          <button type="button" id="btnExportSort" onclick="toggleSortOrder('export')" class="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg px-3 py-3 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่ตอนพิมพ์">
+          <input type="month" id="exportMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-xl px-3 py-3 font-medium focus:outline-none" onchange="onExportMonthChanged()">
+          <button type="button" id="btnExportSort" onclick="toggleSortOrder('export')" class="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl px-3.5 py-3 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่ตอนพิมพ์">
             <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
             <span id="exportSortLabel">วันที่ 1 → 31</span>
           </button>
@@ -390,7 +395,7 @@
     let currentUserId = null;
     const COLLECTION_PREFIX = "att_";
     let dbPath = COLLECTION_PREFIX + 'time_logs'; 
-    let oldDbPath = 'daily_reports'; // Collection เดิมก่อนที่จะมีการปรับปรุงโครงสร้างตาราง
+    let oldDbPath = 'daily_reports'; // Collection เดิมก่อนปรับโครงสร้าง
 
     let currentMonthLogs = []; 
     let currentTabId = 'write';
@@ -559,7 +564,7 @@
         return;
       }
 
-      showLoadingModal("กำลังดึงข้อมูลเก่า", "กำลังตรวจสอบฐานข้อมูลเดิม (daily_reports)...");
+      showLoadingModal("กำลังดึงข้อมูลเก่า", "กำลังตรวจสอบตารางเดิม (daily_reports)...");
 
       try {
         const oldColRef = collection(db, oldDbPath);
@@ -1085,12 +1090,16 @@
         
         if (filtered.length === 0) {
           container.innerHTML = `
-            <div class="empty-state bg-white rounded-xl border border-dashed border-slate-200">
-              <i data-lucide="folder-search" class="w-12 h-12 mb-2 text-slate-300"></i>
-              <p>ไม่มีข้อมูลบันทึกในเดือนนี้</p>
-              <button type="button" onclick="migrateOldFirebaseData()" class="mt-4 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-medium flex items-center gap-1.5 transition border border-amber-200">
-                <i data-lucide="database" class="w-3.5 h-3.5"></i> ดึงข้อมูลจาก Firebase เดิม (daily_reports)
-              </button>
+            <div class="empty-state bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center shadow-sm">
+              <i data-lucide="folder-search" class="w-12 h-12 mb-3 text-slate-300 mx-auto"></i>
+              <p class="text-sm font-medium text-slate-600 mb-1">ไม่มีข้อมูลบันทึกในเดือนนี้</p>
+              <p class="text-xs text-slate-400 mb-5">หากคุณเคยลงบันทึกในระบบเดิม สามารถกดดึงข้อมูลกลับมาได้ทันที</p>
+              
+              <div class="flex flex-col sm:flex-row gap-2.5 justify-center w-full max-w-sm mx-auto">
+                <button type="button" onclick="migrateOldFirebaseData()" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-sm">
+                  <i data-lucide="database" class="w-4 h-4"></i> ดึงข้อมูลจาก Firebase เดิม
+                </button>
+              </div>
             </div>`;
         } else {
           container.innerHTML = filtered.map(log => createLogCard(log, false)).join('');
