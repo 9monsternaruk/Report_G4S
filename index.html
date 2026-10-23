@@ -375,8 +375,6 @@
     const db = getFirestore(app);
 
     let currentUserId = null;
-    
-    // 1. แยกชื่อ Collection ตามโจทย์เพื่อไม่ให้ข้อมูลชนกับแอปอื่นและมี Prefix นำหน้าชัดเจน
     const COLLECTION_PREFIX = "att_";
     let dbPath = COLLECTION_PREFIX + 'time_logs'; 
 
@@ -386,7 +384,7 @@
     let currentEditImageUrl = null;
     let isImageRemoved = false;
     let hasRunImageCleanup = false;
-    let activeUnsubscribe = null; // เก็บตัวยกเลิก listener เพื่อสลับเดือนอย่างประหยัดโควต้า
+    let activeUnsubscribe = null;
 
     let readSortOrder = 'desc';
     let exportSortOrder = 'asc';
@@ -482,10 +480,8 @@
         const userCred = await signInAnonymously(auth);
         currentUserId = userCred.user.uid;
         
-        // โหลดข้อมูลตามเดือนที่ตั้งค่าเริ่มต้น
         loadMonthData(document.getElementById('readMonth').value);
 
-        // ตรวจสอบและลบรูปเก่าเกิน 3 เดือน (ทำงานเบื้องหลัง 1 ครั้ง)
         if (!hasRunImageCleanup) {
           hasRunImageCleanup = true;
           cleanupOldImages();
@@ -496,11 +492,9 @@
       }
     }
 
-    // 2. ปรับการดึงข้อมูลเป็นแบบรายเดือน (Query by Month) เพื่อประหยัด Document Reads
     function loadMonthData(monthKey) {
       if (!currentUserId || !monthKey) return;
 
-      // ยกเลิก listener ตัวเก่าก่อนเพื่อไม่ให้เปลืองโควต้าซ้อนทับกัน
       if (activeUnsubscribe) {
         activeUnsubscribe();
         activeUnsubscribe = null;
@@ -509,7 +503,6 @@
       document.getElementById('activeMonthBadge').textContent = `แฟ้ม: ${monthKey}`;
 
       const colRef = collection(db, dbPath);
-      // ทำ Query เฉพาะเดือนที่เลือก (where monthKey == ...)
       const q = query(colRef, where("monthKey", "==", monthKey));
 
       activeUnsubscribe = onSnapshot(q, (snapshot) => {
@@ -535,7 +528,6 @@
 
     window.onMonthChanged = function() {
       const selectedMonth = document.getElementById('readMonth').value;
-      // ให้หน้าออกรายงานเปลี่ยนเดือนตามไปด้วยเพื่อความสะดวก
       document.getElementById('exportMonth').value = selectedMonth;
       loadMonthData(selectedMonth);
     }
@@ -546,7 +538,6 @@
       loadMonthData(selectedMonth);
     }
 
-    // 3. ฟังก์ชันตรวจสอบและเคลียร์รูปภาพที่เก่าเกิน 3 เดือนออกโดยอัตโนมัติ
     async function cleanupOldImages() {
       try {
         const today = new Date();
@@ -554,7 +545,6 @@
         const cutoffDateStr = today.toISOString().split('T')[0];
 
         const colRef = collection(db, dbPath);
-        // ดึงเฉพาะรายการที่วันที่น้อยกว่า cutoffDate และมีรูปภาพอยู่
         const q = query(colRef, where("date", "<", cutoffDateStr));
         const querySnapshot = await getDocs(q);
 
@@ -848,7 +838,6 @@
           timestamp: new Date().toISOString()
         };
 
-        // 3. บีบอัดรูปก่อนบันทึกเสมอ
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
           const base64Img = await compressImage(file);
@@ -886,7 +875,6 @@
       }
     }
 
-    // ฟังก์ชันบีบอัดรูปภาพด้วย HTML Canvas ให้ขนาดเล็กลงก่อนเซฟเข้า Firestore
     function compressImage(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -914,7 +902,6 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             
-            // ปรับคุณภาพเป็น 0.6 เพื่อบีบอัดขนาดไฟล์ให้เหมาะสม
             resolve(canvas.toDataURL('image/jpeg', 0.6));
           };
           img.onerror = (err) => reject(err);
@@ -1313,7 +1300,6 @@
         if (skippedCount > 0) msg += ` (ซ้ำ/ข้าม ${skippedCount} รายการ)`;
         showToast(msg);
 
-        // รีเฟรชโหลดข้อมูลเดือนปัจจุบัน
         loadMonthData(document.getElementById('readMonth').value);
 
       } catch (error) {
