@@ -563,39 +563,100 @@
       }
     }
 
-    // ฟังก์ชันเปิดดูรูปเต็มจอพร้อมรองรับการใช้นิ้วซูม
+    // --- ระบบซูมภาพด้วยนิ้ว (Custom Pinch-to-Zoom) สำหรับ Android/iOS ---
+    let currentScale = 1;
+    let currentPanX = 0;
+    let currentPanY = 0;
+    let initialPinchDistance = null;
+    let lastScale = 1;
+    let startX = 0;
+    let startY = 0;
+    let isPanning = false;
+
+    function resetZoom() {
+      currentScale = 1;
+      currentPanX = 0;
+      currentPanY = 0;
+      lastScale = 1;
+      const img = document.getElementById('imageViewerSrc');
+      if (img) img.style.transform = `translate(0px, 0px) scale(1)`;
+    }
+
+    // ฟังก์ชันเปิดดูรูปเต็มจอ
     window.openImageViewer = function(url) {
       if (!url) return;
       
       const modal = document.getElementById('imageViewerModal');
       const img = document.getElementById('imageViewerSrc');
-      const viewport = document.getElementById('viewport-meta');
       
+      resetZoom();
       img.src = url;
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       
-      // หน่วงเวลาเล็กน้อยเพื่อให้ Animation CSS ทำงาน และปลดล็อคให้ซูมได้
       setTimeout(() => {
         modal.classList.remove('opacity-0');
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
       }, 10);
     }
 
     window.closeImageViewer = function() {
       const modal = document.getElementById('imageViewerModal');
-      const viewport = document.getElementById('viewport-meta');
       
       modal.classList.add('opacity-0');
-      // ล็อคกลับไปเหมือนเดิม กันไม่ให้หน้าเว็บหลักเด้ง
-      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       
       setTimeout(() => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         document.getElementById('imageViewerSrc').src = '';
+        resetZoom();
       }, 300);
     }
+
+    // ตรวจจับการสัมผัสหน้าจอเพื่อซูมและเลื่อน
+    const viewer = document.getElementById('imageViewerModal');
+    const imgEl = document.getElementById('imageViewerSrc');
+
+    viewer.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        // ใช้ 2 นิ้วถ่างซูม
+        initialPinchDistance = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+        lastScale = currentScale;
+      } else if (e.touches.length === 1 && currentScale > 1) {
+        // ใช้ 1 นิ้วเลื่อนดูรูปตอนที่ซูมอยู่
+        isPanning = true;
+        startX = e.touches[0].pageX - currentPanX;
+        startY = e.touches[0].pageY - currentPanY;
+      }
+    });
+
+    viewer.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault(); // ป้องกันหน้าจอหลักเลื่อน
+        const currentDistance = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+        // จำกัดระยะการซูม 1x ถึง 5x
+        currentScale = Math.max(1, Math.min(lastScale * (currentDistance / initialPinchDistance), 5));
+        imgEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentScale})`;
+      } else if (e.touches.length === 1 && isPanning && currentScale > 1) {
+        e.preventDefault();
+        currentPanX = e.touches[0].pageX - startX;
+        currentPanY = e.touches[0].pageY - startY;
+        imgEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentScale})`;
+      }
+    }, { passive: false });
+
+    viewer.addEventListener('touchend', (e) => {
+      initialPinchDistance = null;
+      isPanning = false;
+      if (e.touches.length < 2) {
+        lastScale = currentScale;
+      }
+    });
 
     window.toggleSortOrder = function(section) {
       if (section === 'read') {
