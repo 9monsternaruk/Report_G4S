@@ -36,7 +36,6 @@
       line-height: 32px;
     }
 
-    /* การตั้งค่าหน้ากระดาษพิมพ์ (A4) - ปรับปรุงสำหรับ iPad Safari */
     @media print {
       @page {
         size: A4 portrait;
@@ -59,18 +58,15 @@
         margin: 0 !important;
       }
 
-      /* ซ่อนส่วนที่ไม่จำเป็นตอนพิมพ์ */
       .no-print, nav, #header-bar, .toast, .modal, #loadingModal, #importModal, #write-section, #read-section, #imageViewerModal { 
         display: none !important; 
       }
       
-      /* บังคับคอนเทนเนอร์ให้เป็น Block เพื่อกันบั๊กหน้าว่าง */
       #export-section, #exportContainer { 
         display: block !important; 
         width: 100% !important;
       }
 
-      /* ป้องกันการ์ดตัดกลางแผ่น ลบล้างการจัดรูปแบบที่ไม่รองรับ */
       .log-card { 
         display: block !important;
         page-break-inside: avoid !important;
@@ -100,7 +96,6 @@
         font-weight: bold;
       }
       
-      /* ปรับโครงสร้างลายเซ็นใหม่ ให้พิมพ์ง่ายไม่เคลื่อน */
       .print-footer {
         display: block !important;
         width: 100% !important;
@@ -132,9 +127,14 @@
 <body class="antialiased selection:bg-emerald-200 selection:text-emerald-900">
 
   <header id="header-bar" class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm no-print">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-center">
-      <i data-lucide="book-open-check" class="text-emerald-500 mr-2"></i>
-      <h1 class="text-lg font-semibold text-slate-800">สมุดบันทึกรายงาน</h1>
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center">
+        <i data-lucide="book-open-check" class="text-emerald-500 mr-2"></i>
+        <h1 class="text-lg font-semibold text-slate-800">สมุดบันทึกรายงาน</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="activeMonthBadge" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-lg font-medium">กำลังโหลด...</span>
+      </div>
     </div>
   </header>
 
@@ -167,7 +167,6 @@
         <div class="mb-6">
           <label class="block text-sm font-medium text-slate-600 mb-1">แนบรูปภาพ (ถ้ามี)</label>
           
-          <!-- กล่องแสดงตัวอย่างรูปภาพ -->
           <div id="imagePreviewBox" class="hidden mb-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
             <div class="flex items-center justify-between mb-2">
               <span id="imagePreviewBadge" class="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">รูปภาพที่แนบ</span>
@@ -185,7 +184,6 @@
             </div>
           </div>
 
-          <!-- แถบแจ้งเตือนเมื่อกดลบรูปเดิมในโหมดแก้ไข -->
           <div id="imageRemovedNotice" class="hidden mb-3 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
             <span class="text-xs text-red-700 font-medium flex items-center gap-1.5">
               <i data-lucide="image-off" class="w-4 h-4 shrink-0"></i> รูปภาพเดิมจะถูกลบออกเมื่อกดบันทึกการแก้ไข
@@ -199,7 +197,7 @@
             <label for="logImage" class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
               <div class="flex flex-col items-center justify-center pt-5 pb-6">
                 <i data-lucide="image-plus" class="w-6 h-6 text-slate-400 mb-2"></i>
-                <p class="text-xs text-slate-500" id="fileNameDisplay">แตะเพื่อเลือกรูปภาพ</p>
+                <p class="text-xs text-slate-500" id="fileNameDisplay">แตะเพื่อเลือกรูปภาพ (ระบบจะบีบอัดอัตโนมัติ)</p>
               </div>
               <input id="logImage" type="file" accept="image/*" class="hidden" onchange="handleFileSelect(event)" />
             </label>
@@ -221,9 +219,9 @@
     <!-- หน้าเปิดอ่าน -->
     <section id="read-section" class="tab-content hidden">
       <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 mb-4 sticky top-[60px] z-30">
-        <label class="block text-xs font-medium text-slate-500 mb-1 text-center">แฟ้มบันทึกเดือน</label>
+        <label class="block text-xs font-medium text-slate-500 mb-1 text-center">แฟ้มบันทึกเดือน (ประหยัดโควต้าด้วยการดึงเฉพาะเดือน)</label>
         <div class="flex gap-2 items-center">
-          <input type="month" id="readMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="renderUI()">
+          <input type="month" id="readMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-2 font-medium focus:outline-none" onchange="onMonthChanged()">
           <button type="button" id="btnReadSort" onclick="toggleSortOrder('read')" class="shrink-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่">
             <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
             <span id="readSortLabel">ล่าสุด → วันแรก</span>
@@ -249,7 +247,7 @@
       <div class="no-print bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
         <label class="block text-sm font-medium text-slate-600 mb-2 text-center">เลือกเดือนที่ต้องการพิมพ์รายงาน</label>
         <div class="flex gap-2 items-center mb-4">
-          <input type="month" id="exportMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium focus:outline-none" onchange="renderUI()">
+          <input type="month" id="exportMonth" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-center rounded-lg px-3 py-3 font-medium focus:outline-none" onchange="onExportMonthChanged()">
           <button type="button" id="btnExportSort" onclick="toggleSortOrder('export')" class="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg px-3 py-3 text-xs font-medium flex items-center gap-1.5 transition" title="สลับการเรียงลำดับวันที่ตอนพิมพ์">
             <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
             <span id="exportSortLabel">วันที่ 1 → 31</span>
@@ -262,17 +260,14 @@
         </button>
       </div>
 
-      <!-- ส่วนหัวของรายงานตอนพิมพ์ (แสดงเฉพาะตอน Print) -->
       <div class="hidden print-header text-center mb-6">
         <h2 class="text-xl font-bold text-black">รายงานผลการปฏิบัติงานประจำเดือน <span id="printMonthText"></span></h2>
       </div>
 
-      <!-- คอนเทนเนอร์รายการตอนพิมพ์ -->
       <div id="exportContainer" class="flex flex-col gap-2">
         <!-- Logs for export will be injected here -->
       </div>
       
-      <!-- ส่วนท้ายลายเซ็น (แสดงเฉพาะตอน Print) -->
       <div class="hidden print-footer mt-12 pt-8">
         <div class="print-footer-box">
           <p class="mb-8">ลงชื่อ................................................ผู้รายงาน</p>
@@ -289,7 +284,6 @@
 
   </main>
 
-  <!-- Bottom Navigation -->
   <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-50 no-print shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
     <div class="max-w-2xl mx-auto flex justify-around">
       <button type="button" onclick="switchTab('write', this)" class="nav-btn active flex-1 py-3 flex flex-col items-center gap-1 text-emerald-600 transition-colors">
@@ -307,14 +301,12 @@
     </div>
   </nav>
 
-  <!-- ImageViewer Modal สำหรับดูรูปภาพและซูม -->
   <div id="imageViewerModal" class="fixed inset-0 bg-black/95 z-[150] hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300">
     <div class="absolute top-0 left-0 w-full flex justify-end p-4 z-[160] bg-gradient-to-b from-black/50 to-transparent">
       <button onclick="closeImageViewer()" class="text-white p-2 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm">
         <i data-lucide="x" class="w-6 h-6"></i>
       </button>
     </div>
-    <!-- พื้นที่แสดงรูปภาพ ใช้ overflow-auto เพื่อให้ใช้นิ้วเลื่อนได้เมื่อซูม -->
     <div class="w-full h-full flex items-center justify-center overflow-auto p-2" id="imageViewerContainer">
       <img id="imageViewerSrc" src="" alt="Full Screen Image" class="max-w-full max-h-[90vh] object-contain">
     </div>
@@ -323,12 +315,9 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
   <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 text-white px-4 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 w-max max-w-[90%]">
-    <!-- เนื้อหาจะถูกแทรกด้วย JavaScript -->
   </div>
 
-  <!-- Confirm Delete Modal -->
   <div id="confirmModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 opacity-0 transition-opacity">
     <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 transform scale-95 transition-transform" id="confirmModalBox">
       <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center mb-4 mx-auto">
@@ -343,14 +332,13 @@
     </div>
   </div>
 
-  <!-- Import Google Sheets Modal -->
   <div id="importModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[105] hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
       <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 mx-auto">
         <i data-lucide="download-cloud" class="w-6 h-6"></i>
       </div>
       <h3 class="text-lg font-bold text-center text-slate-800 mb-1">ดึงข้อมูลจาก Google Sheets</h3>
-      <p class="text-xs text-slate-500 text-center mb-4">กรอกชื่อแท็บ (Sheet Name) ที่ต้องการดึงข้อมูล เช่น <span class="font-semibold text-slate-700">10_2026</span> หรือเว้นว่างเพื่อดึงแท็บแรก</p>
+      <p class="text-xs text-slate-500 text-center mb-4">กรอกชื่อแท็บ (Sheet Name) เช่น <span class="font-semibold text-slate-700">10_2026</span> หรือเว้นว่างเพื่อดึงแท็บแรก</p>
       <input type="text" id="importSheetName" placeholder="เช่น 10_2026, 09_2026" class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3.5 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
       <div class="flex gap-3">
         <button type="button" onclick="closeImportModal()" class="flex-1 py-2.5 rounded-xl font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition text-sm">ยกเลิก</button>
@@ -359,7 +347,6 @@
     </div>
   </div>
 
-  <!-- Loading Modal -->
   <div id="loadingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-2xl max-w-xs w-full">
       <i data-lucide="loader-2" class="w-10 h-10 text-emerald-500 animate-spin mb-4"></i>
@@ -372,7 +359,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCXuj7Pl1JnBn2Y7BtyzkHHQm4MQH-isrM",
@@ -388,29 +375,28 @@
     const db = getFirestore(app);
 
     let currentUserId = null;
-    let dbPath = 'daily_reports'; 
-    let allLogs = []; 
+    
+    // 1. แยกชื่อ Collection ตามโจทย์เพื่อไม่ให้ข้อมูลชนกับแอปอื่นและมี Prefix นำหน้าชัดเจน
+    const COLLECTION_PREFIX = "att_";
+    let dbPath = COLLECTION_PREFIX + 'time_logs'; 
+
+    let currentMonthLogs = []; 
     let currentTabId = 'write';
     let editDocumentId = null;
     let currentEditImageUrl = null;
     let isImageRemoved = false;
-    let hasRunImageCleanup = false; // สำหรับตรวจสอบว่ารันลบรูปเก่าหรือยัง
+    let hasRunImageCleanup = false;
+    let activeUnsubscribe = null; // เก็บตัวยกเลิก listener เพื่อสลับเดือนอย่างประหยัดโควต้า
 
-    // ทิศทางการเรียงลำดับ: 'asc' = วันที่ 1 -> 31 (เก่าไปใหม่), 'desc' = ล่าสุดขึ้นก่อน (31 -> 1)
     let readSortOrder = 'desc';
     let exportSortOrder = 'asc';
 
     const GOOGLE_SHEET_ID = "1-1F8YpcJvM7GGHRmpejjpptG7ht8G6PedYAxQ3_jwJU";
 
-    /**
-     * แปลงวันที่ทุกรูปแบบให้เป็นมาตรฐาน YYYY-MM-DD (ค.ศ.) เสมอ
-     * ป้องกันปัญหา Invalid Date (NaN) เวลาเรียงลำดับข้ามเดือนหรือข้อมูลจาก Google Sheets
-     */
     function normalizeDateStr(raw) {
       if (!raw) return "";
       const str = String(raw).trim();
 
-      // กรณี Date(2026,9,13) จาก Google Visualization API (เดือนใน JS เริ่มที่ 0)
       if (str.startsWith('Date(')) {
         const parts = str.replace('Date(', '').replace(')', '').split(',');
         if (parts.length >= 3) {
@@ -424,7 +410,6 @@
         }
       }
 
-      // กรณี YYYY-M-D หรือ YYYY/M/D
       const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
       if (ymdMatch) {
         let y = parseInt(ymdMatch[1], 10);
@@ -434,7 +419,6 @@
         return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       }
 
-      // กรณี D/M/YYYY หรือ D-M-YYYY (รวมปี 2 หลัก และ พ.ศ.)
       const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
       if (dmyMatch) {
         let d = parseInt(dmyMatch[1], 10);
@@ -448,9 +432,6 @@
       return str;
     }
 
-    /**
-     * แปลงเวลาทุกรูปแบบให้เป็น HH:MM เสมอ
-     */
     function normalizeTimeStr(raw) {
       if (!raw) return "00:00";
       if (Array.isArray(raw) && raw.length >= 2) {
@@ -500,70 +481,100 @@
       try {
         const userCred = await signInAnonymously(auth);
         currentUserId = userCred.user.uid;
-        setupRealtimeListener();
+        
+        // โหลดข้อมูลตามเดือนที่ตั้งค่าเริ่มต้น
+        loadMonthData(document.getElementById('readMonth').value);
+
+        // ตรวจสอบและลบรูปเก่าเกิน 3 เดือน (ทำงานเบื้องหลัง 1 ครั้ง)
+        if (!hasRunImageCleanup) {
+          hasRunImageCleanup = true;
+          cleanupOldImages();
+        }
       } catch (error) {
         console.error("Auth failed:", error);
         showToast("ไม่สามารถเชื่อมต่อฐานข้อมูลได้", "error");
       }
     }
 
-    function setupRealtimeListener() {
-      if (!currentUserId) return;
-      
+    // 2. ปรับการดึงข้อมูลเป็นแบบรายเดือน (Query by Month) เพื่อประหยัด Document Reads
+    function loadMonthData(monthKey) {
+      if (!currentUserId || !monthKey) return;
+
+      // ยกเลิก listener ตัวเก่าก่อนเพื่อไม่ให้เปลืองโควต้าซ้อนทับกัน
+      if (activeUnsubscribe) {
+        activeUnsubscribe();
+        activeUnsubscribe = null;
+      }
+
+      document.getElementById('activeMonthBadge').textContent = `แฟ้ม: ${monthKey}`;
+
       const colRef = collection(db, dbPath);
-      onSnapshot(colRef, (snapshot) => {
-        allLogs = snapshot.docs.map(docSnap => {
+      // ทำ Query เฉพาะเดือนที่เลือก (where monthKey == ...)
+      const q = query(colRef, where("monthKey", "==", monthKey));
+
+      activeUnsubscribe = onSnapshot(q, (snapshot) => {
+        currentMonthLogs = snapshot.docs.map(docSnap => {
           const data = docSnap.data();
           const normDate = normalizeDateStr(data.date);
           const normTime = normalizeTimeStr(data.time);
-          const normMonthKey = normDate.length >= 7 ? normDate.substring(0, 7) : (data.monthKey || "");
           return {
             id: docSnap.id,
             ...data,
             date: normDate || data.date || "",
             time: normTime,
-            monthKey: normMonthKey
+            monthKey: monthKey
           };
         });
         
-        allLogs = sortLogsList(allLogs, readSortOrder);
+        currentMonthLogs = sortLogsList(currentMonthLogs, readSortOrder);
         window.renderUI();
-
-        // เมื่อโหลดข้อมูลเรียบร้อย ให้ตรวจสอบรูปเก่า 1 ครั้ง
-        if (!hasRunImageCleanup && allLogs.length > 0) {
-          hasRunImageCleanup = true;
-          cleanupOldImages();
-        }
       }, (error) => {
-        console.error("Realtime Error:", error);
+        console.error("Query Month Error:", error);
       });
     }
 
-    // ฟังก์ชันลบรูปภาพอัตโนมัติเมื่ออายุเกิน 3 เดือน
-    async function cleanupOldImages() {
-      const today = new Date();
-      // ลบไป 3 เดือน
-      today.setMonth(today.getMonth() - 3);
-      const cutoffDateStr = today.toISOString().split('T')[0];
+    window.onMonthChanged = function() {
+      const selectedMonth = document.getElementById('readMonth').value;
+      // ให้หน้าออกรายงานเปลี่ยนเดือนตามไปด้วยเพื่อความสะดวก
+      document.getElementById('exportMonth').value = selectedMonth;
+      loadMonthData(selectedMonth);
+    }
 
-      // หารายการที่เก่ากว่า 3 เดือน และยังมีรูปภาพอยู่
-      const logsToClean = allLogs.filter(log => log.date < cutoffDateStr && log.imageUrl && log.imageUrl.trim() !== "");
-      
-      if (logsToClean.length > 0) {
-        console.log(`พบรูปภาพที่เก่าเกิน 3 เดือน จำนวน ${logsToClean.length} รายการ กำลังเคลียร์พื้นที่...`);
-        for (const log of logsToClean) {
-          try {
-            const docRef = doc(db, dbPath, log.id);
+    window.onExportMonthChanged = function() {
+      const selectedMonth = document.getElementById('exportMonth').value;
+      document.getElementById('readMonth').value = selectedMonth;
+      loadMonthData(selectedMonth);
+    }
+
+    // 3. ฟังก์ชันตรวจสอบและเคลียร์รูปภาพที่เก่าเกิน 3 เดือนออกโดยอัตโนมัติ
+    async function cleanupOldImages() {
+      try {
+        const today = new Date();
+        today.setMonth(today.getMonth() - 3);
+        const cutoffDateStr = today.toISOString().split('T')[0];
+
+        const colRef = collection(db, dbPath);
+        // ดึงเฉพาะรายการที่วันที่น้อยกว่า cutoffDate และมีรูปภาพอยู่
+        const q = query(colRef, where("date", "<", cutoffDateStr));
+        const querySnapshot = await getDocs(q);
+
+        let cleanedCount = 0;
+        for (const docSnap of querySnapshot.docs) {
+          const data = docSnap.data();
+          if (data.imageUrl && data.imageUrl.trim() !== "") {
+            const docRef = doc(db, dbPath, docSnap.id);
             await updateDoc(docRef, { imageUrl: "" });
-            console.log(`เคลียร์รูปของบันทึกวันที่ ${log.date} สำเร็จ`);
-          } catch (e) {
-            console.error("เกิดข้อผิดพลาดในการลบรูปอัตโนมัติ:", e);
+            cleanedCount++;
           }
         }
+        if (cleanedCount > 0) {
+          console.log(`เคลียร์รูปภาพที่เก่าเกิน 3 เดือนเรียบร้อยแล้ว จำนวน ${cleanedCount} รายการ`);
+        }
+      } catch (e) {
+        console.error("เกิดข้อผิดพลาดในการรันเคลียร์รูปภาพเก่า:", e);
       }
     }
 
-    // --- ระบบซูมภาพด้วยนิ้ว (Custom Pinch-to-Zoom) สำหรับ Android/iOS ---
     let currentScale = 1;
     let currentPanX = 0;
     let currentPanY = 0;
@@ -582,10 +593,8 @@
       if (img) img.style.transform = `translate(0px, 0px) scale(1)`;
     }
 
-    // ฟังก์ชันเปิดดูรูปเต็มจอ
     window.openImageViewer = function(url) {
       if (!url) return;
-      
       const modal = document.getElementById('imageViewerModal');
       const img = document.getElementById('imageViewerSrc');
       
@@ -601,9 +610,7 @@
 
     window.closeImageViewer = function() {
       const modal = document.getElementById('imageViewerModal');
-      
       modal.classList.add('opacity-0');
-      
       setTimeout(() => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -612,20 +619,17 @@
       }, 300);
     }
 
-    // ตรวจจับการสัมผัสหน้าจอเพื่อซูมและเลื่อน
     const viewer = document.getElementById('imageViewerModal');
     const imgEl = document.getElementById('imageViewerSrc');
 
     viewer.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
-        // ใช้ 2 นิ้วถ่างซูม
         initialPinchDistance = Math.hypot(
           e.touches[0].pageX - e.touches[1].pageX,
           e.touches[0].pageY - e.touches[1].pageY
         );
         lastScale = currentScale;
       } else if (e.touches.length === 1 && currentScale > 1) {
-        // ใช้ 1 นิ้วเลื่อนดูรูปตอนที่ซูมอยู่
         isPanning = true;
         startX = e.touches[0].pageX - currentPanX;
         startY = e.touches[0].pageY - currentPanY;
@@ -634,12 +638,11 @@
 
     viewer.addEventListener('touchmove', (e) => {
       if (e.touches.length === 2) {
-        e.preventDefault(); // ป้องกันหน้าจอหลักเลื่อน
+        e.preventDefault();
         const currentDistance = Math.hypot(
           e.touches[0].pageX - e.touches[1].pageX,
           e.touches[0].pageY - e.touches[1].pageY
         );
-        // จำกัดระยะการซูม 1x ถึง 5x
         currentScale = Math.max(1, Math.min(lastScale * (currentDistance / initialPinchDistance), 5));
         imgEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentScale})`;
       } else if (e.touches.length === 1 && isPanning && currentScale > 1) {
@@ -845,6 +848,7 @@
           timestamp: new Date().toISOString()
         };
 
+        // 3. บีบอัดรูปก่อนบันทึกเสมอ
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
           const base64Img = await compressImage(file);
@@ -868,6 +872,7 @@
           showToast("บันทึกข้อมูลเรียบร้อย");
           
           document.getElementById('readMonth').value = monthKey;
+          loadMonthData(monthKey);
           window.cancelEdit();
           window.switchTab('read', document.querySelectorAll('.nav-btn')[1]);
         }
@@ -881,6 +886,7 @@
       }
     }
 
+    // ฟังก์ชันบีบอัดรูปภาพด้วย HTML Canvas ให้ขนาดเล็กลงก่อนเซฟเข้า Firestore
     function compressImage(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -908,6 +914,7 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             
+            // ปรับคุณภาพเป็น 0.6 เพื่อบีบอัดขนาดไฟล์ให้เหมาะสม
             resolve(canvas.toDataURL('image/jpeg', 0.6));
           };
           img.onerror = (err) => reject(err);
@@ -938,7 +945,6 @@
       const safeDetail = escapeHTML(log.detail).replace(/\n/g, '<br>');
       const escapedDetailForAttr = escapeHTML(log.detail).replace(/\\/g, '\\\\').replace(/`/g, '\\`');
       
-      // เพิ่ม cursor-pointer และ click event ให้กับภาพ
       const imgHtml = log.imageUrl 
         ? (isExportMode
             ? `<div class="mt-3 rounded-lg overflow-hidden border border-slate-100"><img src="${log.imageUrl}" alt="รูปประกอบ" class="w-full h-auto object-contain max-h-64 bg-slate-50"></div>`
@@ -1000,11 +1006,7 @@
 
     window.renderUI = function() {
       if (currentTabId === 'read') {
-        const monthKey = document.getElementById('readMonth').value;
-        const filtered = sortLogsList(
-          allLogs.filter(log => log.monthKey === monthKey),
-          readSortOrder
-        );
+        const filtered = sortLogsList(currentMonthLogs, readSortOrder);
         const container = document.getElementById('readContainer');
         
         if (filtered.length === 0) {
@@ -1018,14 +1020,11 @@
         }
       } 
       else if (currentTabId === 'export') {
-        const monthKey = document.getElementById('exportMonth').value;
-        const filtered = sortLogsList(
-          allLogs.filter(log => log.monthKey === monthKey),
-          exportSortOrder
-        );
+        const filtered = sortLogsList(currentMonthLogs, exportSortOrder);
         const container = document.getElementById('exportContainer');
         const btnPrint = document.getElementById('btnPrint');
         
+        const monthKey = document.getElementById('exportMonth').value;
         const [year, month] = monthKey.split('-');
         const thMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
         document.getElementById('printMonthText').textContent = `${thMonths[parseInt(month, 10)-1]} พ.ศ. ${parseInt(year, 10)+543}`;
@@ -1044,7 +1043,7 @@
 
     window.editLog = function(id, date, time, detail, openPickerImmediately = false) {
       editDocumentId = id;
-      const existingLog = allLogs.find(l => l.id === id);
+      const existingLog = currentMonthLogs.find(l => l.id === id);
       currentEditImageUrl = (existingLog && existingLog.imageUrl) ? existingLog.imageUrl : null;
       isImageRemoved = false;
 
@@ -1226,20 +1225,14 @@
         const endIdx = textData.lastIndexOf('}') + 1;
         
         if (startIdx === -1 || endIdx === 0) {
-            throw new Error(`ไม่พบข้อมูลในชีตชื่อ "${targetSheet}" อาจจะพิมพ์ชื่อผิด หรือชีตว่างเปล่า`);
+            throw new Error(`ไม่พบข้อมูลในชีตชื่อ "${targetSheet}"`);
         }
         
         textData = textData.substring(startIdx, endIdx);
-        
-        let jsonData;
-        try {
-            jsonData = JSON.parse(textData);
-        } catch (e) {
-            throw new Error("โครงสร้างข้อมูลภายใน Sheet ผิดรูปแบบ");
-        }
+        let jsonData = JSON.parse(textData);
         
         if (!jsonData.table || !jsonData.table.rows) {
-            throw new Error("ไม่พบตารางข้อมูล กรุณาตรวจสอบว่ามีข้อมูลใน Sheet หรือไม่");
+            throw new Error("ไม่พบตารางข้อมูล");
         }
 
         const rows = jsonData.table.rows;
@@ -1305,16 +1298,13 @@
               logData.imageUrl = imageVal;
            }
 
-           const isExist = allLogs.find(l => l.date === dateVal && l.time === logData.time && l.detail === detailVal);
+           const isExist = currentMonthLogs.find(l => l.date === dateVal && l.time === logData.time && l.detail === detailVal);
            
            if(!isExist) {
              await addDoc(colRef, logData);
              importedCount++;
-             if (importedCount % 5 === 0) {
-                 document.getElementById('loadingDesc').innerText = `กำลังดึงข้อมูล... ได้ ${importedCount} รายการแล้ว`;
-             }
            } else {
-               skippedCount++;
+             skippedCount++;
            }
         }
         
@@ -1322,6 +1312,9 @@
         let msg = `นำเข้าสำเร็จ ${importedCount} รายการ`;
         if (skippedCount > 0) msg += ` (ซ้ำ/ข้าม ${skippedCount} รายการ)`;
         showToast(msg);
+
+        // รีเฟรชโหลดข้อมูลเดือนปัจจุบัน
+        loadMonthData(document.getElementById('readMonth').value);
 
       } catch (error) {
         console.error("Import Error Details:", error);
